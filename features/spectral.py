@@ -9,7 +9,7 @@ SAMPLING_RATE = 6400
 
 def spectral_frequencies(window, n=20, limit_to_harmonics=True):
     """Calculates the spectral frequencies (in Hz) for an application of
-    fftpack.fftfreq.
+    fftpack.fft.
 
     Args:
         window (int): Length of input array.
