@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>CREAM_Feature_Study.features.helpers API documentation</title>
+<meta name="description" content="Implements some helper functions for features." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script async src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML'></script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>CREAM_Feature_Study.features.helpers</code></h1>
+</header>
+<section id="section-intro">
+<p>Implements some helper functions for features.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;Implements some helper functions for features.
+&#34;&#34;&#34;
+
+
+import numpy as np
+from scipy.stats import gmean
+import matplotlib.pyplot as plt
+
+
+import feature_selection
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.metrics import classification_report, plot_confusion_matrix
+
+
+PERIOD_LENGTH = 128
+
+
+##############################################################################
+#                                                                            #
+#                START FEATURE EVALUATION HELPER FUNCTIONS                   #
+#                                                                            #
+##############################################################################
+
+def feature_boxplot(title, X, y):
+    # Set up grid size
+    x_dim = int(np.ceil(X.shape[1] / 5))
+    y_dim = X.shape[1] if X.shape[1] &lt;= 5 else 5
+    # Create figure
+    fig, axs = plt.subplots(x_dim, y_dim, figsize=(y_dim*5, x_dim*4))
+    for col in range(X.shape[1]):
+        x_idx, y_idx = int(np.floor(col / 5)), col % 5
+        # Deal with object, one-dimensional and two-dimensional axs
+        ax = axs if x_dim == 1 and y_dim == 1 else (
+            axs[col] if x_dim == 1 else axs[x_idx, y_idx])
+        # Create boxplot for column col of feature
+        ax.boxplot([X[y == &#39;heater&#39;][:, col], X[y == &#39;millingplant&#39;][:, col],
+                    X[y == &#39;pump&#39;][:, col]],
+                   labels=[&#39;Heater&#39;, &#39;Millingplant&#39;, &#39;Pump&#39;])
+    fig.suptitle(title)
+    plt.show()
+
+
+def feature_evaluation(X, y):
+    # Standardize feature
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    # Prepare a kNN
+    knn = KNeighborsClassifier()
+    param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
+
+    # Do cross-validation on kNN
+    score, estimator = feature_selection.evaluate_feature(X, y, &#39;f1_macro&#39;,
+                                                          knn, param_grid)
+
+    # Predict the data set
+    y_pred = estimator.predict(X)
+
+    # Print accuracy, precision, recall, and f1-score
+    print(&#34;Cross-validation F1-score: {:.2f}&#34;.format(score))
+    # print(&#34;\nPerformance on training data:\n&#34;)
+    # print(classification_report(y, y_pred))
+
+    # Plot confusion matrix (absolute &amp; relative)
+    # plot_confusion_matrix(estimator, X, y)
+    # plt.show()
+    # plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
+    # plt.show()
+
+
+##############################################################################
+#                                                                            #
+#                START FEATURE CALCULATION HELPER FUNCTIONS                  #
+#                                                                            #
+##############################################################################
+
+def rms(x, axis=1):
+    &#34;&#34;&#34;Calculate root mean square (RMS).
+    &#34;&#34;&#34;
+    rms = np.sqrt(np.mean(np.square(x), axis=axis))
+    if axis == 1:
+        return rms.reshape(-1, 1)
+    return rms
+
+
+def geo_mean(x):
+    &#34;&#34;&#34;Calculate geometric mean.
+    &#34;&#34;&#34;
+    return gmean(x, axis=1)
+
+
+def average_periods(X, n_periods):
+    X = X[:, : n_periods * PERIOD_LENGTH]
+    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+    return np.mean(X, axis=1)
+
+
+def normalize(X, method=&#39;max&#39;):
+    if method == &#39;max&#39;:
+        return X / np.max(X, axis=1).reshape(-1, 1)
+    raise ValueError(&#34;Chosen method type does not exist, &#34;
+                     &#34;please refer to the docstring for available methods!&#34;)
+
+
+def apply_to_periods(X, func, n_periods, args):
+    X = X[:, : n_periods * PERIOD_LENGTH]
+    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+    return np.apply_along_axis(func, 2, X, args)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="CREAM_Feature_Study.features.helpers.apply_to_periods"><code class="name flex">
+<span>def <span class="ident">apply_to_periods</span></span>(<span>X, func, n_periods, args)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def apply_to_periods(X, func, n_periods, args):
+    X = X[:, : n_periods * PERIOD_LENGTH]
+    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+    return np.apply_along_axis(func, 2, X, args)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.average_periods"><code class="name flex">
+<span>def <span class="ident">average_periods</span></span>(<span>X, n_periods)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def average_periods(X, n_periods):
+    X = X[:, : n_periods * PERIOD_LENGTH]
+    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+    return np.mean(X, axis=1)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.feature_boxplot"><code class="name flex">
+<span>def <span class="ident">feature_boxplot</span></span>(<span>title, X, y)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def feature_boxplot(title, X, y):
+    # Set up grid size
+    x_dim = int(np.ceil(X.shape[1] / 5))
+    y_dim = X.shape[1] if X.shape[1] &lt;= 5 else 5
+    # Create figure
+    fig, axs = plt.subplots(x_dim, y_dim, figsize=(y_dim*5, x_dim*4))
+    for col in range(X.shape[1]):
+        x_idx, y_idx = int(np.floor(col / 5)), col % 5
+        # Deal with object, one-dimensional and two-dimensional axs
+        ax = axs if x_dim == 1 and y_dim == 1 else (
+            axs[col] if x_dim == 1 else axs[x_idx, y_idx])
+        # Create boxplot for column col of feature
+        ax.boxplot([X[y == &#39;heater&#39;][:, col], X[y == &#39;millingplant&#39;][:, col],
+                    X[y == &#39;pump&#39;][:, col]],
+                   labels=[&#39;Heater&#39;, &#39;Millingplant&#39;, &#39;Pump&#39;])
+    fig.suptitle(title)
+    plt.show()</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.feature_evaluation"><code class="name flex">
+<span>def <span class="ident">feature_evaluation</span></span>(<span>X, y)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def feature_evaluation(X, y):
+    # Standardize feature
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    # Prepare a kNN
+    knn = KNeighborsClassifier()
+    param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
+
+    # Do cross-validation on kNN
+    score, estimator = feature_selection.evaluate_feature(X, y, &#39;f1_macro&#39;,
+                                                          knn, param_grid)
+
+    # Predict the data set
+    y_pred = estimator.predict(X)
+
+    # Print accuracy, precision, recall, and f1-score
+    print(&#34;Cross-validation F1-score: {:.2f}&#34;.format(score))</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.geo_mean"><code class="name flex">
+<span>def <span class="ident">geo_mean</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate geometric mean.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def geo_mean(x):
+    &#34;&#34;&#34;Calculate geometric mean.
+    &#34;&#34;&#34;
+    return gmean(x, axis=1)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.normalize"><code class="name flex">
+<span>def <span class="ident">normalize</span></span>(<span>X, method='max')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def normalize(X, method=&#39;max&#39;):
+    if method == &#39;max&#39;:
+        return X / np.max(X, axis=1).reshape(-1, 1)
+    raise ValueError(&#34;Chosen method type does not exist, &#34;
+                     &#34;please refer to the docstring for available methods!&#34;)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.rms"><code class="name flex">
+<span>def <span class="ident">rms</span></span>(<span>x, axis=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate root mean square (RMS).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rms(x, axis=1):
+    &#34;&#34;&#34;Calculate root mean square (RMS).
+    &#34;&#34;&#34;
+    rms = np.sqrt(np.mean(np.square(x), axis=axis))
+    if axis == 1:
+        return rms.reshape(-1, 1)
+    return rms</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="CREAM_Feature_Study.features" href="index.html">CREAM_Feature_Study.features</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="two-column">
+<li><code><a title="CREAM_Feature_Study.features.helpers.apply_to_periods" href="#CREAM_Feature_Study.features.helpers.apply_to_periods">apply_to_periods</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.average_periods" href="#CREAM_Feature_Study.features.helpers.average_periods">average_periods</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.feature_boxplot" href="#CREAM_Feature_Study.features.helpers.feature_boxplot">feature_boxplot</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.feature_evaluation" href="#CREAM_Feature_Study.features.helpers.feature_evaluation">feature_evaluation</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.geo_mean" href="#CREAM_Feature_Study.features.helpers.geo_mean">geo_mean</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.normalize" href="#CREAM_Feature_Study.features.helpers.normalize">normalize</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.rms" href="#CREAM_Feature_Study.features.helpers.rms">rms</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>CREAM_Feature_Study.data_loader API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script async src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML'></script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>CREAM_Feature_Study.data_loader</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import csv
+import sys
+import random
+import numpy as np
+
+
+PATH_TO_DATA = &#39;/var/lib/cream/&#39;
+PATH_TO_CREAM = PATH_TO_DATA + &#39;CREAM/&#39;
+PERIOD_LENGTH = 6400 // 50       # Each period is 128 sampling points
+
+
+##############################################################################
+#                                                                            #
+#                         START DATA ACCESS FUNCTIONS                        #
+#                                                                            #
+##############################################################################
+
+
+def get_component_events():
+    # Import data utility from the CREAM repo
+    sys.path.append(PATH_TO_CREAM)
+    from data_utility import CREAM_Day
+
+    cream = CREAM_Day(PATH_TO_DATA + &#39;2018-08-23/&#39;)
+
+    return cream.load_component_events(PATH_TO_DATA + &#34;component_events.csv&#34;,
+                                       filter_day=False)
+
+
+def read_event(id, duration):
+    with open(f&#34;{PATH_TO_DATA}component_events/{id}.csv&#34;, &#39;r&#39;) as f:
+        reader = csv.reader(f)
+        voltage = np.array(next(reader)[:int(duration*6400)]).astype(float)
+        current = np.array(next(reader)[:int(duration*6400)]).astype(float)
+    return voltage, current
+
+
+def read_dataset(component_events, start_offset=4400, duration=2):
+    event_types, voltages, currents = [], [], []
+
+    idcs = ((component_events.Component != &#39;unlabeled&#39;) &amp;
+            (component_events.Event_Type == &#39;On&#39;))
+    full_duration = duration + (start_offset / 6400)
+
+    for event in component_events[idcs].itertuples():
+        # Print crude progress report
+        progress_percent = round(100 * ((len(event_types)+1) / 1499), 1)
+        print(f&#34;\r\r\r\r\r\r{progress_percent}%&#34;,  end=&#39;&#39;, flush=True)
+        # Load current from csv file
+        voltage, current = read_event(event.ID, duration=full_duration)
+        # Append voltage, current and event to lists
+        event_types.append(event.Component)
+        voltages.append(voltage[start_offset:])
+        currents.append(current[start_offset:])
+
+    # Transform harmonics and corresponding events into correct format
+    voltage = np.vstack(voltages)
+    current = np.vstack(currents)
+    y = np.array(event_types).reshape(-1,)
+
+    return voltage, current, y
+
+
+def get_events_sample(size, events=None, seed=42, duration=4):
+    if events is None:
+        events = get_component_events()
+        events = events[(events.Component != &#39;unlabeled&#39;) &amp;
+                        (events.Event_Type == &#39;On&#39;)]
+    random.seed(42)
+    samples_idcs = random.sample(range(len(events)), size)
+
+    events = [events.iloc[idx] for idx in samples_idcs]
+    return [(event, read_event(event.ID, duration)) for event in events]
+
+
+##############################################################################
+#                                                                            #
+#                     START DATA PREPROCESSING FUNCTIONS                     #
+#                                                                            #
+##############################################################################
+
+
+def preprocess(voltage, current, periods, offsets=False):
+    &#34;&#34;&#34;Preprocesses data by removing area without activity and aligning with rising zero crossing
+
+    Args:
+        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods.
+        offsets (bool): Whether to return offsets used (True) or only measurements.
+
+    Returns:
+        Tuple of preprocessed measurements as (n_samples, periods*128)-dimensional array (&amp; offsets if specified).
+    &#34;&#34;&#34;
+    voltage, current, event_offsets \
+        = offset_correct(voltage, current, periods+1)
+    voltage, current, period_offsets \
+        = synchronize_period(voltage, current, periods=periods)
+    if not offsets:
+        return voltage, current
+    return voltage, current, event_offsets, period_offsets
+
+
+def _offset_correct_single(voltage, current, periods, pre=5):
+    &#34;&#34;&#34;Calculates the offset at which nonactivity ends (for 1D V,I arrays).
+
+    Nonactivity has been observed to have absolute current values smaller than
+    1 ampere, so this is used to detect first occurrence of larger values.
+
+    Args:
+        voltage: (window_size,)-dimensional array of voltage measurements.
+        current: (window_size,)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods.
+        pre (int): is subtracted from actual detected offset (for period offsetting).
+
+    Returns:
+        Tuple containing AOI of voltage and current and the offset used.
+    &#34;&#34;&#34;
+    event_offset = max(np.min(np.where(np.abs(current) &gt; 1)[0]) - pre, 0)
+    if event_offset+periods*PERIOD_LENGTH &gt; len(current):
+        raise ValueError(&#34;Use longer input for offsetting (event_offset + &#34;
+                         f&#34;periods*128 = {event_offset + periods*128} &gt; &#34;
+                         f&#34;{len(current)})&#34;)
+    return (voltage[event_offset: event_offset+periods*PERIOD_LENGTH],
+            current[event_offset: event_offset+periods*PERIOD_LENGTH],
+            event_offset)
+
+
+def offset_correct(voltage, current, periods=51, pre=5):
+    &#34;&#34;&#34;Calculates the offset at which nonactivity ends.
+
+    Nonactivity has been observed to have absolute current values smaller than
+    1 ampere, so this is used to detect first occurrence of larger values.
+
+    Args:
+        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods. Default is 51.
+        pre (int): is subtracted from actual detected offset (for period offsetting).
+
+    Returns:
+        Tuple containing arrays with AOI of voltage and current and the offset used.
+    &#34;&#34;&#34;
+    v = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    i = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    offsets = []
+
+    for idx in range(voltage.shape[0]):
+        v[idx], i[idx], offset = _offset_correct_single(voltage[idx],
+                                                        current[idx],
+                                                        periods, pre)
+        offsets.append(offset)
+    return v, i, np.array(offsets).reshape(-1, 1)
+
+
+def _synchronize_period_single(voltage, current, periods, use_periods=10):
+    &#34;&#34;&#34;Calculates offset that aligns current with rising zero crossing (for 1D V,I arrays).
+
+    Offset is calculated as the mean of the first use_periods zero crossings.
+
+    Args:
+        voltage: (window_size,)-dimensional array of voltage measurements.
+        current: (window_size,)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods.
+        use_periods (int): Number of zero crossings to average for offset calculation.
+
+    Returns:
+        Tuple containing arrays with AOI of voltage and current and the offset used.
+    &#34;&#34;&#34;
+    # Extract area of interest
+    x = current[: (periods+1)*PERIOD_LENGTH]
+
+    # Calculate offset to first start of sin
+    roots = np.mod(np.where((x[:use_periods*PERIOD_LENGTH] &lt;= 0)
+                            &amp; (x[1:use_periods*PERIOD_LENGTH+1] &gt; 0))[0], 128)
+    offset = int(np.mean(roots)) + 1
+
+    # Return cut area
+    return (voltage[offset: offset + periods*PERIOD_LENGTH],
+            current[offset: offset + periods*PERIOD_LENGTH],
+            offset)
+
+
+def synchronize_period(voltage, current, periods=-1):
+    &#34;&#34;&#34;Calculates offset that aligns current with rising zero crossing.
+
+    Offset is calculated as the mean of the first use_periods zero crossings.
+
+    Args:
+        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods. Default is max possible.
+        use_periods (int): Number of zero crossings to average for offset calculation.
+
+    Returns:
+        Tuple containing arrays with AOI of voltage and current and the offset used.
+    &#34;&#34;&#34;
+    if periods == -1:
+        periods = int(np.floor((current.shape[1]-1) / PERIOD_LENGTH))
+
+    v = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    i = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    offsets = []
+
+    for idx in range(voltage.shape[0]):
+        v[idx], i[idx], offset = _synchronize_period_single(voltage[idx],
+                                                            current[idx],
+                                                            periods=periods)
+        offsets.append(offset)
+    return v, i, np.array(offsets).reshape(-1, 1)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="CREAM_Feature_Study.data_loader.get_component_events"><code class="name flex">
+<span>def <span class="ident">get_component_events</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_component_events():
+    # Import data utility from the CREAM repo
+    sys.path.append(PATH_TO_CREAM)
+    from data_utility import CREAM_Day
+
+    cream = CREAM_Day(PATH_TO_DATA + &#39;2018-08-23/&#39;)
+
+    return cream.load_component_events(PATH_TO_DATA + &#34;component_events.csv&#34;,
+                                       filter_day=False)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.data_loader.get_events_sample"><code class="name flex">
+<span>def <span class="ident">get_events_sample</span></span>(<span>size, events=None, seed=42, duration=4)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_events_sample(size, events=None, seed=42, duration=4):
+    if events is None:
+        events = get_component_events()
+        events = events[(events.Component != &#39;unlabeled&#39;) &amp;
+                        (events.Event_Type == &#39;On&#39;)]
+    random.seed(42)
+    samples_idcs = random.sample(range(len(events)), size)
+
+    events = [events.iloc[idx] for idx in samples_idcs]
+    return [(event, read_event(event.ID, duration)) for event in events]</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.data_loader.offset_correct"><code class="name flex">
+<span>def <span class="ident">offset_correct</span></span>(<span>voltage, current, periods=51, pre=5)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculates the offset at which nonactivity ends.</p>
+<p>Nonactivity has been observed to have absolute current values smaller than
+1 ampere, so this is used to detect first occurrence of larger values.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>voltage</code></strong></dt>
+<dd>(n_samples, window_size)-dimensional array of voltage measurements.</dd>
+<dt><strong><code>current</code></strong></dt>
+<dd>(n_samples, window_size)-dimensional array of current measurements.</dd>
+<dt><strong><code>periods</code></strong> :&ensp;<code>int</code></dt>
+<dd>Length of area of interest in periods. Default is 51.</dd>
+<dt><strong><code>pre</code></strong> :&ensp;<code>int</code></dt>
+<dd>is subtracted from actual detected offset (for period offsetting).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>Tuple containing arrays with AOI of voltage and current and the offset used.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def offset_correct(voltage, current, periods=51, pre=5):
+    &#34;&#34;&#34;Calculates the offset at which nonactivity ends.
+
+    Nonactivity has been observed to have absolute current values smaller than
+    1 ampere, so this is used to detect first occurrence of larger values.
+
+    Args:
+        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods. Default is 51.
+        pre (int): is subtracted from actual detected offset (for period offsetting).
+
+    Returns:
+        Tuple containing arrays with AOI of voltage and current and the offset used.
+    &#34;&#34;&#34;
+    v = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    i = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    offsets = []
+
+    for idx in range(voltage.shape[0]):
+        v[idx], i[idx], offset = _offset_correct_single(voltage[idx],
+                                                        current[idx],
+                                                        periods, pre)
+        offsets.append(offset)
+    return v, i, np.array(offsets).reshape(-1, 1)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.data_loader.preprocess"><code class="name flex">
+<span>def <span class="ident">preprocess</span></span>(<span>voltage, current, periods, offsets=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Preprocesses data by removing area without activity and aligning with rising zero crossing</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>voltage</code></strong></dt>
+<dd>(n_samples, window_size)-dimensional array of voltage measurements.</dd>
+<dt><strong><code>current</code></strong></dt>
+<dd>(n_samples, window_size)-dimensional array of current measurements.</dd>
+<dt><strong><code>periods</code></strong> :&ensp;<code>int</code></dt>
+<dd>Length of area of interest in periods.</dd>
+<dt><strong><code>offsets</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Whether to return offsets used (True) or only measurements.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>Tuple of preprocessed measurements as (n_samples, periods*128)-dimensional array (&amp; offsets if specified).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def preprocess(voltage, current, periods, offsets=False):
+    &#34;&#34;&#34;Preprocesses data by removing area without activity and aligning with rising zero crossing
+
+    Args:
+        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods.
+        offsets (bool): Whether to return offsets used (True) or only measurements.
+
+    Returns:
+        Tuple of preprocessed measurements as (n_samples, periods*128)-dimensional array (&amp; offsets if specified).
+    &#34;&#34;&#34;
+    voltage, current, event_offsets \
+        = offset_correct(voltage, current, periods+1)
+    voltage, current, period_offsets \
+        = synchronize_period(voltage, current, periods=periods)
+    if not offsets:
+        return voltage, current
+    return voltage, current, event_offsets, period_offsets</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.data_loader.read_dataset"><code class="name flex">
+<span>def <span class="ident">read_dataset</span></span>(<span>component_events, start_offset=4400, duration=2)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def read_dataset(component_events, start_offset=4400, duration=2):
+    event_types, voltages, currents = [], [], []
+
+    idcs = ((component_events.Component != &#39;unlabeled&#39;) &amp;
+            (component_events.Event_Type == &#39;On&#39;))
+    full_duration = duration + (start_offset / 6400)
+
+    for event in component_events[idcs].itertuples():
+        # Print crude progress report
+        progress_percent = round(100 * ((len(event_types)+1) / 1499), 1)
+        print(f&#34;\r\r\r\r\r\r{progress_percent}%&#34;,  end=&#39;&#39;, flush=True)
+        # Load current from csv file
+        voltage, current = read_event(event.ID, duration=full_duration)
+        # Append voltage, current and event to lists
+        event_types.append(event.Component)
+        voltages.append(voltage[start_offset:])
+        currents.append(current[start_offset:])
+
+    # Transform harmonics and corresponding events into correct format
+    voltage = np.vstack(voltages)
+    current = np.vstack(currents)
+    y = np.array(event_types).reshape(-1,)
+
+    return voltage, current, y</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.data_loader.read_event"><code class="name flex">
+<span>def <span class="ident">read_event</span></span>(<span>id, duration)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def read_event(id, duration):
+    with open(f&#34;{PATH_TO_DATA}component_events/{id}.csv&#34;, &#39;r&#39;) as f:
+        reader = csv.reader(f)
+        voltage = np.array(next(reader)[:int(duration*6400)]).astype(float)
+        current = np.array(next(reader)[:int(duration*6400)]).astype(float)
+    return voltage, current</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.data_loader.synchronize_period"><code class="name flex">
+<span>def <span class="ident">synchronize_period</span></span>(<span>voltage, current, periods=-1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculates offset that aligns current with rising zero crossing.</p>
+<p>Offset is calculated as the mean of the first use_periods zero crossings.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>voltage</code></strong></dt>
+<dd>(n_samples, window_size)-dimensional array of voltage measurements.</dd>
+<dt><strong><code>current</code></strong></dt>
+<dd>(n_samples, window_size)-dimensional array of current measurements.</dd>
+<dt><strong><code>periods</code></strong> :&ensp;<code>int</code></dt>
+<dd>Length of area of interest in periods. Default is max possible.</dd>
+<dt><strong><code>use_periods</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of zero crossings to average for offset calculation.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>Tuple containing arrays with AOI of voltage and current and the offset used.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def synchronize_period(voltage, current, periods=-1):
+    &#34;&#34;&#34;Calculates offset that aligns current with rising zero crossing.
+
+    Offset is calculated as the mean of the first use_periods zero crossings.
+
+    Args:
+        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        periods (int): Length of area of interest in periods. Default is max possible.
+        use_periods (int): Number of zero crossings to average for offset calculation.
+
+    Returns:
+        Tuple containing arrays with AOI of voltage and current and the offset used.
+    &#34;&#34;&#34;
+    if periods == -1:
+        periods = int(np.floor((current.shape[1]-1) / PERIOD_LENGTH))
+
+    v = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    i = np.empty((voltage.shape[0], periods * PERIOD_LENGTH))
+    offsets = []
+
+    for idx in range(voltage.shape[0]):
+        v[idx], i[idx], offset = _synchronize_period_single(voltage[idx],
+                                                            current[idx],
+                                                            periods=periods)
+        offsets.append(offset)
+    return v, i, np.array(offsets).reshape(-1, 1)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="CREAM_Feature_Study" href="index.html">CREAM_Feature_Study</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="CREAM_Feature_Study.data_loader.get_component_events" href="#CREAM_Feature_Study.data_loader.get_component_events">get_component_events</a></code></li>
+<li><code><a title="CREAM_Feature_Study.data_loader.get_events_sample" href="#CREAM_Feature_Study.data_loader.get_events_sample">get_events_sample</a></code></li>
+<li><code><a title="CREAM_Feature_Study.data_loader.offset_correct" href="#CREAM_Feature_Study.data_loader.offset_correct">offset_correct</a></code></li>
+<li><code><a title="CREAM_Feature_Study.data_loader.preprocess" href="#CREAM_Feature_Study.data_loader.preprocess">preprocess</a></code></li>
+<li><code><a title="CREAM_Feature_Study.data_loader.read_dataset" href="#CREAM_Feature_Study.data_loader.read_dataset">read_dataset</a></code></li>
+<li><code><a title="CREAM_Feature_Study.data_loader.read_event" href="#CREAM_Feature_Study.data_loader.read_event">read_event</a></code></li>
+<li><code><a title="CREAM_Feature_Study.data_loader.synchronize_period" href="#CREAM_Feature_Study.data_loader.synchronize_period">synchronize_period</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
