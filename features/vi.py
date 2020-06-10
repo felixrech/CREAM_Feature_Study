@@ -515,3 +515,21 @@ def periods_to_steady_state_current(current):
     l = (1/8 * (np.max(cot, axis=1) - np.median(cot, axis=1)) +
          np.median(cot, axis=1))
     return np.argmax(cot > l.reshape(-1, 1), axis=1).reshape(-1, 1) + 1
+
+
+##############################################################################
+#                                                                            #
+#                        START EXPERIMENTAL FEATURES                         #
+#                                                                            #
+##############################################################################
+
+
+def ratio_transient_steady_states(current):
+    # Ratio of RMS of first 5 with last 5 states
+    return (rms(current[:, :5*128]) / rms(current[:, -5*128:])).reshape(-1, 1)
+
+
+def current_rms(current):
+    # TODO: Calculate new shape independent of current shape
+    # RMS of periods 1-10, 11-20, 21-30, ...
+    return rms(current.reshape(-1, 5, 10*128), axis=2)

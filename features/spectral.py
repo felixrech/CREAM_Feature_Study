@@ -284,3 +284,15 @@ def signal_to_signal_mean_ratio(current):
     """
     spec = np.apply_along_axis(_spectrum_single, 1, current)
     return (np.max(spec, axis=1) / np.mean(spec, axis=1)).reshape(-1, 1)
+
+
+##############################################################################
+#                                                                            #
+#                        START EXPERIMENTAL FEATURES                         #
+#                                                                            #
+##############################################################################
+
+
+def second_harmonic(harmonics_amp):
+    # Second harmonic as one-dimensional feature
+    return harmonics_amp[:, 1].reshape(-1, 1)
