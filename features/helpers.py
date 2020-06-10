@@ -22,7 +22,7 @@ PERIOD_LENGTH = 128
 #                                                                            #
 ##############################################################################
 
-def feature_boxplot(title, X, y):
+def feature_boxplot(title, X, y, out=True):
     # Set up grid size
     x_dim = int(np.ceil(X.shape[1] / 5))
     y_dim = X.shape[1] if X.shape[1] <= 5 else 5
@@ -36,18 +36,18 @@ def feature_boxplot(title, X, y):
         # Create boxplot for column col of feature
         ax.boxplot([X[y == 'heater'][:, col], X[y == 'millingplant'][:, col],
                     X[y == 'pump'][:, col]],
-                   labels=['Heater', 'Millingplant', 'Pump'])
+                   labels=['Heater', 'Millingplant', 'Pump'], showfliers=out)
     fig.suptitle(title)
     plt.show()
 
 
-def feature_evaluation(X, y):
+def feature_evaluation(X, y, output=True):
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
     # Prepare a kNN
-    knn = KNeighborsClassifier()
+    knn = KNeighborsClassifier(n_jobs=-1)
     param_grid = {'n_neighbors': np.arange(1, 20)}
 
     # Do cross-validation on kNN
@@ -58,7 +58,8 @@ def feature_evaluation(X, y):
     y_pred = estimator.predict(X)
 
     # Print accuracy, precision, recall, and f1-score
-    print("Cross-validation F1-score: {:.2f}".format(score))
+    if output:
+        print("Cross-validation F1-score: {:.2f}".format(score))
     # print("\nPerformance on training data:\n")
     # print(classification_report(y, y_pred))
 
@@ -67,6 +68,7 @@ def feature_evaluation(X, y):
     # plt.show()
     # plot_confusion_matrix(estimator, X, y, normalize='true')
     # plt.show()
+    return score
 
 
 ##############################################################################
