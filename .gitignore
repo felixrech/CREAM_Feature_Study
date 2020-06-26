@@ -1,0 +1,7 @@
+# Cached python files
+__pycache__/
+*/__pycache__/
+
+# Development files
+.vscode/
+.ipynb_checkpoints/
