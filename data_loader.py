@@ -35,7 +35,7 @@ def read_event(id, duration):
     return voltage, current
 
 
-def read_dataset(component_events, start_offset=4400, duration=2):
+def read_dataset(component_events, start_offset=0, duration=2):
     event_types, voltages, currents = [], [], []
 
     idcs = ((component_events.Component != 'unlabeled') &
