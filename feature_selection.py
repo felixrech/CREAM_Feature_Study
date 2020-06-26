@@ -3,11 +3,17 @@ import itertools
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from functools import partial
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.metrics import classification_report, plot_confusion_matrix
+
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.linear_model import RidgeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 
 line_del = ''.join(itertools.repeat('\r', 50))
@@ -87,6 +93,7 @@ def forward_selection(features, y, feature_eval, max_features=None,
         else:
             print(f"{line_del}\n{df[['new', 'score']]}\n\n"
                   "No new feature selected, returning")
+            break
 
     return df.iloc[0]
 
