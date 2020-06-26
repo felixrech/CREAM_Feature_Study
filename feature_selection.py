@@ -127,31 +127,33 @@ def simple_forward_selection(n_features, y, model, max=None, one_dim=False):
     return forward_selection(n_features, y, evaluation, max, one_dim)
 
 
-def feature_combinations(normed_features, y,  n_features,
-                         metric=None, classifier=None, param_grid={}):
-    # Set default values
-    if metric is None:
-        metric = 'f1_macro'
-    if classifier is None and param_grid == {}:
-        param_grid = {'n_neighbors': np.arange(1, 20)}
-    if classifier is None:
-        classifier = KNeighborsClassifier(n_jobs=-1)
+def feature_combinations(normed_features, y,  n_features, metric='f1_macro',
+                         models=['knn', 'svc', 'ridge', 'decision_tree']):
 
-    df = pd.DataFrame(columns=['feature_combination', 'dimension', 'score'])
-    feature_combs = itertools.combinations(normed_features.keys(), n_features)
+    df = pd.DataFrame(columns=['model', 'feature_combination', 'dimension',
+                               'score'])
+    # Generator empty after first model if not converted to list
+    feature_combs = list(itertools.combinations(normed_features.keys(),
+                                                n_features))
     num_combs = int(scipy.special.comb(len(normed_features), n_features))
     start = datetime.now()
 
-    for i, combination in enumerate(feature_combs):
-        time_remaining = (datetime.now() - start) / (i+1) * (num_combs - (i+1))
-        print(f"{line_del}Feature combination {i}/{num_combs}, "
-              f"time remaining: {time_remaining}", end='')
+    for j, model in enumerate(models):
+        evaluation = get_evaluation(model)
 
-        X = np.empty((y.shape[0], 0))
-        for feature in combination:
-            X = np.hstack((X, normed_features[feature]))
-            score, _ = evaluate_feature(X, y, metric, classifier, param_grid)
-            df.loc[i] = (combination, X.shape[1], score)
+        for i, combination in enumerate(feature_combs):
+            now_num = j*num_combs + i + 1
+            remaining = (len(models)-(j+1)) * num_combs + num_combs - i
+            time_remaining = (datetime.now() - start) / now_num * remaining
+            print(f"{line_del}Model {j+1}/{len(models)}, "
+                  f"feature combination {i+1}/{num_combs}, "
+                  f"time remaining: {str(time_remaining)[:-7]}", end='')
+
+            X = np.empty((y.shape[0], 0))
+            for feature in combination:
+                X = np.hstack((X, normed_features[feature]))
+                score, _ = evaluation(X, y)
+                df.loc[now_num] = (model, combination, X.shape[1], score)
 
     total_time = (datetime.now() - start)
     print(f'{line_del}Calculations finished in {total_time}', end='')
