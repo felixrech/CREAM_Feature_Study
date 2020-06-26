@@ -98,6 +98,35 @@ def forward_selection(features, y, feature_eval, max_features=None,
     return df.iloc[0]
 
 
+def get_evaluation(model):
+    if model == 'knn':
+        classifier = KNeighborsClassifier(n_jobs=-1)
+        param_grid = {'n_neighbors': np.arange(1, 20)}
+    elif model == 'svc':
+        classifier = SVC()
+        param_grid = {'gamma': [0.1, 1, 10, 100]}
+    elif model == 'ridge':
+        classifier = RidgeClassifier()
+        param_grid = {'alpha': [0.01, 0.05, 0.1, 0.5, 1, 5, 10]}
+    elif model == 'decision_tree':
+        classifier = DecisionTreeClassifier()
+        param_grid = {'max_depth': range(1, 20, 2),
+                      'min_samples_split': [5, 10, 50, 100]}
+    elif model == 'adaboost':
+        classifier = AdaBoostClassifier()
+        param_grid = {'n_estimators': [2, 5, 10, 20, 50]}
+    else:
+        raise ValueError(f"Classifier of type {model} not implemented")
+
+    return partial(evaluate_feature, metric='f1_macro',
+                   classifier=classifier, param_grid=param_grid)
+
+
+def simple_forward_selection(n_features, y, model, max=None, one_dim=False):
+    evaluation = get_evaluation(model)
+    return forward_selection(n_features, y, evaluation, max, one_dim)
+
+
 def feature_combinations(normed_features, y,  n_features,
                          metric=None, classifier=None, param_grid={}):
     # Set default values
