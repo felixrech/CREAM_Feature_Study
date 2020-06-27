@@ -26,109 +26,17 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import numpy as np
-from scipy import fftpack
+from scipy import fft
 
-from features.helpers import rms, geo_mean
-
-
-SAMPLING_RATE = 6400
+from features.helpers import rms, geo_mean, normalize
 
 
-def spectral_frequencies(window, n=20, limit_to_harmonics=True):
-    &#34;&#34;&#34;Calculates the spectral frequencies (in Hz) for an application of
-    fftpack.fftfreq.
-
-    Args:
-        window (int): Length of input array.
-        limit_to_harmonics (bool): Whether to return harmonic frequencies (True) or the full spectrum.
-        n (int): Number of harmonics.
-
-    Returns:
-        Spectral frequencies as a list.
-    &#34;&#34;&#34;
-    freqs = fftpack.fftfreq(window) * SAMPLING_RATE
-    if limit_to_harmonics:
-        idcs = (freqs % 50 == 0) &amp; (freqs &gt; 0) &amp; (freqs &lt;= n*50)
-        return freqs[idcs]
-    return freqs
+POWER_FREQUENCY = 50  # Hz
+SAMPLING_RATE = 6400  # Measurements / second
+PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 
 
-def _harmonics_single(current, n=20, window=None):
-    &#34;&#34;&#34;Calculates the amplitudes of the first n harmonics frequencies.
-
-    Args:
-        current: (window_size,)-dimensional array of current measurements.
-        n (int): Number of harmonics.
-        window (int): Only use window-sized subset of current measurements.
-
-    Returns:
-        Harmonic amplitudes as a (n,)-dimensional array.
-    &#34;&#34;&#34;
-    # If window is not specified floor to next power of two
-    if window is None:
-        window = int(2**np.floor(np.log2(current.shape[0])))
-
-    # Normalize input current
-    normalized_current = current[:window] / np.max(current[:window])
-
-    # Calculate FFT and corresponding frequencies (in Hz)
-    X = fftpack.fft(normalized_current)
-    freqs = spectral_frequencies(window, limit_to_harmonics=False)
-
-    # Limit spectrum to harmonics
-    harmonics_idcs = (freqs % 50 == 0) &amp; (freqs &gt; 0) &amp; (freqs &lt;= n*50)
-    return np.abs(X[harmonics_idcs])
-
-
-def harmonics(current, n=20, window=None):
-    &#34;&#34;&#34;Calculates the amplitudes of the first n harmonics frequencies.
-
-    Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
-        n (int): Number of harmonics.
-        window (int): Only use window-sized subset of current measurements.
-
-    Returns:
-        Harmonic amplitudes as a (n_samples, n)-dimensional array.
-    &#34;&#34;&#34;
-    return np.apply_along_axis(_harmonics_single, 1, current, n=n, window=window)
-
-
-def _spectrum_single(current, window=None):
-    &#34;&#34;&#34;Calculates the spectrum (absolute amplitude for positive frequencies)
-    for a single (one-dimensional) current array.
-
-    Will use window-sized subsets of current measurements. Note that for
-    performance reasons window should be a power of two. By default, window
-    will be calculated to be the smallest power of two smaller or equal than
-    the window size of the complete current array. Example: input of 2s
-    interval = 12800 measurements -&gt; window is calculated to be 8192. You can
-    get the corresponding frequencies with the spectral_frequencies method.
-
-    Args:
-        current: (window_size,)-dimensional array of current measurements.
-        window: Optional, use window-sized subsets of current measurements for FFT.
-
-    Returns:
-        Spectrum as a (n_frequencies,)-dimensional array.
-    &#34;&#34;&#34;
-    # If window is not specified floor to next power of two
-    if window is None:
-        window = int(2**np.floor(np.log2(current.shape[0])))
-
-    # Normalize input current
-    normalized_current = current[:window] / np.max(current[:window])
-
-    # Calculate FFT and corresponding frequencies (in Hz)
-    X = fftpack.fft(normalized_current)
-    freqs = spectral_frequencies(window, limit_to_harmonics=False)
-
-    # Limit spectrum to harmonics
-    spectrum_idcs = (freqs &gt; 0) &amp; (freqs &lt;= SAMPLING_RATE / 2)
-    return np.abs(X[spectrum_idcs])
-
-
-def spectrum(current, window=None):
+def spectrum(current, window=None, sampling_rate=SAMPLING_RATE):
     &#34;&#34;&#34;Calculates the spectrum (absolute amplitude for positive frequencies)
     for (two-dimensional) arrays of current measurements.
 
@@ -146,7 +54,65 @@ def spectrum(current, window=None):
     Returns:
         Spectrum as a (n_samples, n_frequencies)-dimensional array.
     &#34;&#34;&#34;
-    return np.apply_along_axis(_spectrum_single, 1, current)
+    # If window is not specified floor to next power of two
+    if window is None:
+        window = int(2**np.floor(np.log2(current.shape[1])))
+
+    normalized_current = normalize(current[:, :window])
+    return np.abs(fft.rfft(normalized_current, axis=1))
+
+
+def spectral_frequencies(window, n=20, limit_to_harmonics=True,
+                         sampling_rate=SAMPLING_RATE,
+                         power_frequency=POWER_FREQUENCY):
+    &#34;&#34;&#34;Calculates the spectral frequencies (in Hz) for an application of
+    fft.rfft.
+
+    Args:
+        window (int): Length of input array.
+        limit_to_harmonics (bool): Whether to return harmonic frequencies (True) or the full spectrum.
+        n (int): Number of harmonics.
+
+    Returns:
+        Spectral frequencies as a list.
+    &#34;&#34;&#34;
+    freqs = fft.rfftfreq(window) * sampling_rate
+    if limit_to_harmonics:
+        return freqs[get_harmonics_indices(freqs, n=n)]
+    return freqs
+
+
+def get_harmonics_indices(spectral_frequencies, n=20,
+                          power_freq=POWER_FREQUENCY):
+    harmonics = np.arange(power_freq, n * power_freq+1, power_freq)
+    freqs = np.where(spectral_frequencies &lt; 0, 0, spectral_frequencies)
+    return np.argmin(np.abs(np.dstack([freqs]*n) - harmonics), axis=1).reshape(-1)
+
+
+def harmonics(current, n=20, window=None, power_frequency=POWER_FREQUENCY):
+    &#34;&#34;&#34;Calculates the amplitudes of the first n harmonics frequencies.
+
+    Will use window-sized subsets of current measurements. Note that for
+    performance reasons window should be a power of two. By default, window
+    will be calculated to be the smallest power of two smaller or equal than
+    the window size of the complete current array. Example: input of 2s
+    interval = 12800 measurements -&gt; window is calculated to be 8192. You can
+    get the corresponding frequencies with the spectral_frequencies method.
+
+    Args:
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        n (int): Number of harmonics.
+        window (int): Only use window-sized subset of current measurements.
+
+    Returns:
+        Harmonic amplitudes as a (n_samples, n)-dimensional array.
+    &#34;&#34;&#34;
+    # If window is not specified floor to next power of two
+    if window is None:
+        window = int(2**np.floor(np.log2(current.shape[1])))
+
+    freqs = spectral_frequencies(window, n, limit_to_harmonics=False)
+    return spectrum(current, window)[:, get_harmonics_indices(freqs, n=n)]
 
 
 def odd_even_ratio(harmonics_amp):
@@ -164,32 +130,27 @@ def odd_even_ratio(harmonics_amp):
     Returns:
         Odd-even ratio as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    odd = np.mean(harmonics_amp[:, np.arange(0, 20, step=2)], axis=1)
-    even = np.mean(harmonics_amp[:, np.arange(1, 20, step=2)], axis=1)
-    return (odd / even).reshape(-1, 1)
+    odd, even = np.arange(0, 20, step=20), np.arange(1, 20, step=20)
+    return (np.mean(harmonics_amp[:, odd], axis=1)
+            / np.mean(harmonics_amp[:, even], axis=1)).reshape(-1, 1)
 
 
-def spectral_flatness(harmonics_amp):
+def spectral_flatness(spectrum_amp):
     &#34;&#34;&#34;Calculates the Spectral flatness (SPF).
 
-    TODO: Explain bins &amp; x_f
-
-    Let \\(x_{f_1}, ..., x_{f_{20}}\\) be the amplitudes of the first 20
-    harmonics of the current. Then:
+    Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
+    \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SPF = \\frac{\\sqrt[N]{\\prod_{f \\in f_{bins}} x_f}}
-                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}
-           \\overset{\\propto}{\\sim}
-           \\frac{\\sqrt[20]{\\prod_{i=1}^{20} x_{f_i}}}
-                 {\\frac{1}{20} \\sum_{i=1}^{20} x_{f_i}}\\]
+                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
         Spectral flatness as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    return (geo_mean(harmonics_amp) / np.mean(harmonics_amp, axis=1)).reshape(-1, 1)
+    return (geo_mean(spectrum_amp) / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)
 
 
 def harmonics_energy_distribution(harmonics_amp):
@@ -252,33 +213,29 @@ def total_harmonic_distortion(harmonics_amp):
     return (rms(harmonics_amp[:, 1:]) / harmonics_amp[:, 0].reshape(-1, 1))
 
 
-def spectral_centroid(harmonics_amp, current):
+def spectral_centroid(spectrum_amp, current):
     &#34;&#34;&#34;Calculates the Spectral centroid \\(C_f\\).
 
-    TODO: Explain bins &amp; x_f
-
-    Let \\(x_{f_1}, ..., x_{f_{20}}\\) be the amplitudes of the first 20
-    harmonics of the current. Then:
+    Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
+    \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SPF = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
-                   {\\sum_{f \\in f_{bins}} x_f}
-           \\overset{\\propto}{\\sim}
-           \\frac{\\sum_{i=0}^{20} x_{f_i} \\times f_i}
-                 {\\sum_{i=0}^{20} x_{f_i}}\\]
+                   {\\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
         Spectral centroid as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    freqs = 1 / spectral_frequencies(current.shape[1], 20)
-    numerator = np.sum(harmonics_amp * freqs, axis=1).reshape(-1, 1)
-    denominator = np.sum(harmonics_amp, axis=1).reshape(-1, 1)
-    return numerator / denominator
+    window = int(2**np.floor(np.log2(current.shape[1])))
+    freqs = spectral_frequencies(window, limit_to_harmonics=False)[1:]
+
+    return (np.sum(spectrum_amp[:, 1:] / freqs, axis=1)
+            / np.sum(spectrum_amp[:, 1:], axis=1)).reshape(-1, 1)
 
 
-def harmonic_spectral_centroid(current):
+def harmonic_spectral_centroid(current, power_frequency=POWER_FREQUENCY):
     &#34;&#34;&#34;Calculates the spectral centroid \\(C_h\\).
 
     \\[C_h = \\frac{\\sum_{i=1}^{50} x_{f_i} \\cdot i}
@@ -290,27 +247,43 @@ def harmonic_spectral_centroid(current):
     Returns:
         Harmonic spectral centroid as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    harmonics_amp = harmonics(current, n=50)
-    numerator = np.sum(harmonics_amp * np.arange(1, 51), axis=1)
-    denominator = np.sum(harmonics_amp, axis=1)
-    return (numerator / denominator).reshape(-1, 1)
+    harmonics_amp = harmonics(current, n=50, power_frequency=power_frequency)
+    return (np.sum(harmonics_amp * np.arange(1, 51), axis=1)
+            / np.sum(harmonics_amp, axis=1)).reshape(-1, 1)
 
 
-def signal_to_signal_mean_ratio(current):
+def signal_to_signal_mean_ratio(spectrum_amp):
     &#34;&#34;&#34;Calculates the signal to signal mean ratio (SSMR).
 
-    \\[SSMR = \\frac{\\max(\\text{spec})}{\\text{mean}(\\text{spec})}\\] where
-    \\(\\text{spec}\\) is the absolute amplitude of positive frequencies in
-    the spectrum.
+    Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
+    \\(f\\) in the current&#39;s spectrum. Then:
+
+    \\[SSMR = \\frac{\\max_{f \\in f_{bins}} x_f}
+                    {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
         Signal to signal mean ratio as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    spec = np.apply_along_axis(_spectrum_single, 1, current)
-    return (np.max(spec, axis=1) / np.mean(spec, axis=1)).reshape(-1, 1)</code></pre>
+    return (np.max(spectrum_amp, axis=1)
+            / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)
+
+
+def second_harmonic(harmonics_amp):
+    &#34;&#34;&#34;Calculates the amplitude of the second harmonic.
+
+    You can get the corresponding frequency with the spectral_frequencies
+    method (use the second element of its return value).
+
+    Args:
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+
+    Returns:
+        Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
+    &#34;&#34;&#34;
+    return harmonics_amp[:, 1].reshape(-1, 1)</code></pre>
 </details>
 </section>
 <section>
@@ -320,8 +293,24 @@ def signal_to_signal_mean_ratio(current):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="CREAM_Feature_Study.features.spectral.get_harmonics_indices"><code class="name flex">
+<span>def <span class="ident">get_harmonics_indices</span></span>(<span>spectral_frequencies, n=20, power_freq=50)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_harmonics_indices(spectral_frequencies, n=20,
+                          power_freq=POWER_FREQUENCY):
+    harmonics = np.arange(power_freq, n * power_freq+1, power_freq)
+    freqs = np.where(spectral_frequencies &lt; 0, 0, spectral_frequencies)
+    return np.argmin(np.abs(np.dstack([freqs]*n) - harmonics), axis=1).reshape(-1)</code></pre>
+</details>
+</dd>
 <dt id="CREAM_Feature_Study.features.spectral.harmonic_spectral_centroid"><code class="name flex">
-<span>def <span class="ident">harmonic_spectral_centroid</span></span>(<span>current)</span>
+<span>def <span class="ident">harmonic_spectral_centroid</span></span>(<span>current, power_frequency=50)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the spectral centroid <span><span class="MathJax_Preview">C_h</span><script type="math/tex">C_h</script></span>.</p>
@@ -339,7 +328,7 @@ def signal_to_signal_mean_ratio(current):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def harmonic_spectral_centroid(current):
+<pre><code class="python">def harmonic_spectral_centroid(current, power_frequency=POWER_FREQUENCY):
     &#34;&#34;&#34;Calculates the spectral centroid \\(C_h\\).
 
     \\[C_h = \\frac{\\sum_{i=1}^{50} x_{f_i} \\cdot i}
@@ -351,17 +340,22 @@ def signal_to_signal_mean_ratio(current):
     Returns:
         Harmonic spectral centroid as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    harmonics_amp = harmonics(current, n=50)
-    numerator = np.sum(harmonics_amp * np.arange(1, 51), axis=1)
-    denominator = np.sum(harmonics_amp, axis=1)
-    return (numerator / denominator).reshape(-1, 1)</code></pre>
+    harmonics_amp = harmonics(current, n=50, power_frequency=power_frequency)
+    return (np.sum(harmonics_amp * np.arange(1, 51), axis=1)
+            / np.sum(harmonics_amp, axis=1)).reshape(-1, 1)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.harmonics"><code class="name flex">
-<span>def <span class="ident">harmonics</span></span>(<span>current, n=20, window=None)</span>
+<span>def <span class="ident">harmonics</span></span>(<span>current, n=20, window=None, power_frequency=50)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the amplitudes of the first n harmonics frequencies.</p>
+<p>Will use window-sized subsets of current measurements. Note that for
+performance reasons window should be a power of two. By default, window
+will be calculated to be the smallest power of two smaller or equal than
+the window size of the complete current array. Example: input of 2s
+interval = 12800 measurements -&gt; window is calculated to be 8192. You can
+get the corresponding frequencies with the spectral_frequencies method.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -377,8 +371,15 @@ def signal_to_signal_mean_ratio(current):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def harmonics(current, n=20, window=None):
+<pre><code class="python">def harmonics(current, n=20, window=None, power_frequency=POWER_FREQUENCY):
     &#34;&#34;&#34;Calculates the amplitudes of the first n harmonics frequencies.
+
+    Will use window-sized subsets of current measurements. Note that for
+    performance reasons window should be a power of two. By default, window
+    will be calculated to be the smallest power of two smaller or equal than
+    the window size of the complete current array. Example: input of 2s
+    interval = 12800 measurements -&gt; window is calculated to be 8192. You can
+    get the corresponding frequencies with the spectral_frequencies method.
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -388,7 +389,12 @@ def signal_to_signal_mean_ratio(current):
     Returns:
         Harmonic amplitudes as a (n_samples, n)-dimensional array.
     &#34;&#34;&#34;
-    return np.apply_along_axis(_harmonics_single, 1, current, n=n, window=window)</code></pre>
+    # If window is not specified floor to next power of two
+    if window is None:
+        window = int(2**np.floor(np.log2(current.shape[1])))
+
+    freqs = spectral_frequencies(window, n, limit_to_harmonics=False)
+    return spectrum(current, window)[:, get_harmonics_indices(freqs, n=n)]</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.harmonics_energy_distribution"><code class="name flex">
@@ -463,23 +469,58 @@ harmonics of the current. Then:</p>
     Returns:
         Odd-even ratio as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    odd = np.mean(harmonics_amp[:, np.arange(0, 20, step=2)], axis=1)
-    even = np.mean(harmonics_amp[:, np.arange(1, 20, step=2)], axis=1)
-    return (odd / even).reshape(-1, 1)</code></pre>
+    odd, even = np.arange(0, 20, step=20), np.arange(1, 20, step=20)
+    return (np.mean(harmonics_amp[:, odd], axis=1)
+            / np.mean(harmonics_amp[:, even], axis=1)).reshape(-1, 1)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.spectral.second_harmonic"><code class="name flex">
+<span>def <span class="ident">second_harmonic</span></span>(<span>harmonics_amp)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculates the amplitude of the second harmonic.</p>
+<p>You can get the corresponding frequency with the spectral_frequencies
+method (use the second element of its return value).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>spectrum_amp</code></strong></dt>
+<dd>Spectral amplitudes as a (n_samples, window)-dimensional array.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def second_harmonic(harmonics_amp):
+    &#34;&#34;&#34;Calculates the amplitude of the second harmonic.
+
+    You can get the corresponding frequency with the spectral_frequencies
+    method (use the second element of its return value).
+
+    Args:
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+
+    Returns:
+        Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
+    &#34;&#34;&#34;
+    return harmonics_amp[:, 1].reshape(-1, 1)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.signal_to_signal_mean_ratio"><code class="name flex">
-<span>def <span class="ident">signal_to_signal_mean_ratio</span></span>(<span>current)</span>
+<span>def <span class="ident">signal_to_signal_mean_ratio</span></span>(<span>spectrum_amp)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the signal to signal mean ratio (SSMR).</p>
-<p><span><span class="MathJax_Preview">SSMR = \frac{\max(\text{spec})}{\text{mean}(\text{spec})}</span><script type="math/tex; mode=display">SSMR = \frac{\max(\text{spec})}{\text{mean}(\text{spec})}</script></span> where
-<span><span class="MathJax_Preview">\text{spec}</span><script type="math/tex">\text{spec}</script></span> is the absolute amplitude of positive frequencies in
-the spectrum.</p>
+<p>Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part amplitude of the bin with frequency
+<span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum. Then:</p>
+<p><span><span class="MathJax_Preview">SSMR = \frac{\max_{f \in f_{bins}} x_f}
+{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">SSMR = \frac{\max_{f \in f_{bins}} x_f}
+{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>current</code></strong></dt>
-<dd>(n_samples, window_size)-dimensional array of current measurements.</dd>
+<dt><strong><code>spectrum_amp</code></strong></dt>
+<dd>Spectral amplitudes as a (n_samples, window)-dimensional array.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Signal to signal mean ratio as a (n_samples, 1)-dimensional array.</p></div>
@@ -487,44 +528,39 @@ the spectrum.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def signal_to_signal_mean_ratio(current):
+<pre><code class="python">def signal_to_signal_mean_ratio(spectrum_amp):
     &#34;&#34;&#34;Calculates the signal to signal mean ratio (SSMR).
 
-    \\[SSMR = \\frac{\\max(\\text{spec})}{\\text{mean}(\\text{spec})}\\] where
-    \\(\\text{spec}\\) is the absolute amplitude of positive frequencies in
-    the spectrum.
+    Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
+    \\(f\\) in the current&#39;s spectrum. Then:
+
+    \\[SSMR = \\frac{\\max_{f \\in f_{bins}} x_f}
+                    {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
         Signal to signal mean ratio as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    spec = np.apply_along_axis(_spectrum_single, 1, current)
-    return (np.max(spec, axis=1) / np.mean(spec, axis=1)).reshape(-1, 1)</code></pre>
+    return (np.max(spectrum_amp, axis=1)
+            / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.spectral_centroid"><code class="name flex">
-<span>def <span class="ident">spectral_centroid</span></span>(<span>harmonics_amp, current)</span>
+<span>def <span class="ident">spectral_centroid</span></span>(<span>spectrum_amp, current)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Spectral centroid <span><span class="MathJax_Preview">C_f</span><script type="math/tex">C_f</script></span>.</p>
-<p>TODO: Explain bins &amp; x_f</p>
-<p>Let <span><span class="MathJax_Preview">x_{f_1}, ..., x_{f_{20}}</span><script type="math/tex">x_{f_1}, ..., x_{f_{20}}</script></span> be the amplitudes of the first 20
-harmonics of the current. Then:</p>
+<p>Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part amplitude of the bin with frequency
+<span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum. Then:</p>
 <p><span><span class="MathJax_Preview">SPF = \frac{\sum_{f \in f_{bins}} x_f \times f}
-{\sum_{f \in f_{bins}} x_f}
-\overset{\propto}{\sim}
-\frac{\sum_{i=0}^{20} x_{f_i} \times f_i}
-{\sum_{i=0}^{20} x_{f_i}}</span><script type="math/tex; mode=display">SPF = \frac{\sum_{f \in f_{bins}} x_f \times f}
-{\sum_{f \in f_{bins}} x_f}
-\overset{\propto}{\sim}
-\frac{\sum_{i=0}^{20} x_{f_i} \times f_i}
-{\sum_{i=0}^{20} x_{f_i}}</script></span></p>
+{\sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">SPF = \frac{\sum_{f \in f_{bins}} x_f \times f}
+{\sum_{f \in f_{bins}} x_f}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>harmonics_amp</code></strong></dt>
-<dd>Harmonic amplitudes as a (n_samples, n)-dimensional array.</dd>
+<dt><strong><code>spectrum_amp</code></strong></dt>
+<dd>Spectral amplitudes as a (n_samples, window)-dimensional array.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Spectral centroid as a (n_samples, 1)-dimensional array.</p></div>
@@ -532,53 +568,42 @@ harmonics of the current. Then:</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def spectral_centroid(harmonics_amp, current):
+<pre><code class="python">def spectral_centroid(spectrum_amp, current):
     &#34;&#34;&#34;Calculates the Spectral centroid \\(C_f\\).
 
-    TODO: Explain bins &amp; x_f
-
-    Let \\(x_{f_1}, ..., x_{f_{20}}\\) be the amplitudes of the first 20
-    harmonics of the current. Then:
+    Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
+    \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SPF = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
-                   {\\sum_{f \\in f_{bins}} x_f}
-           \\overset{\\propto}{\\sim}
-           \\frac{\\sum_{i=0}^{20} x_{f_i} \\times f_i}
-                 {\\sum_{i=0}^{20} x_{f_i}}\\]
+                   {\\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
         Spectral centroid as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    freqs = 1 / spectral_frequencies(current.shape[1], 20)
-    numerator = np.sum(harmonics_amp * freqs, axis=1).reshape(-1, 1)
-    denominator = np.sum(harmonics_amp, axis=1).reshape(-1, 1)
-    return numerator / denominator</code></pre>
+    window = int(2**np.floor(np.log2(current.shape[1])))
+    freqs = spectral_frequencies(window, limit_to_harmonics=False)[1:]
+
+    return (np.sum(spectrum_amp[:, 1:] / freqs, axis=1)
+            / np.sum(spectrum_amp[:, 1:], axis=1)).reshape(-1, 1)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.spectral_flatness"><code class="name flex">
-<span>def <span class="ident">spectral_flatness</span></span>(<span>harmonics_amp)</span>
+<span>def <span class="ident">spectral_flatness</span></span>(<span>spectrum_amp)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Spectral flatness (SPF).</p>
-<p>TODO: Explain bins &amp; x_f</p>
-<p>Let <span><span class="MathJax_Preview">x_{f_1}, ..., x_{f_{20}}</span><script type="math/tex">x_{f_1}, ..., x_{f_{20}}</script></span> be the amplitudes of the first 20
-harmonics of the current. Then:</p>
+<p>Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part amplitude of the bin with frequency
+<span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum. Then:</p>
 <p><span><span class="MathJax_Preview">SPF = \frac{\sqrt[N]{\prod_{f \in f_{bins}} x_f}}
-{\frac{1}{N} \sum_{f \in f_{bins}} x_f}
-\overset{\propto}{\sim}
-\frac{\sqrt[20]{\prod_{i=1}^{20} x_{f_i}}}
-{\frac{1}{20} \sum_{i=1}^{20} x_{f_i}}</span><script type="math/tex; mode=display">SPF = \frac{\sqrt[N]{\prod_{f \in f_{bins}} x_f}}
-{\frac{1}{N} \sum_{f \in f_{bins}} x_f}
-\overset{\propto}{\sim}
-\frac{\sqrt[20]{\prod_{i=1}^{20} x_{f_i}}}
-{\frac{1}{20} \sum_{i=1}^{20} x_{f_i}}</script></span></p>
+{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">SPF = \frac{\sqrt[N]{\prod_{f \in f_{bins}} x_f}}
+{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>harmonics_amp</code></strong></dt>
-<dd>Harmonic amplitudes as a (n_samples, n)-dimensional array.</dd>
+<dt><strong><code>spectrum_amp</code></strong></dt>
+<dd>Spectral amplitudes as a (n_samples, window)-dimensional array.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Spectral flatness as a (n_samples, 1)-dimensional array.</p></div>
@@ -586,35 +611,30 @@ harmonics of the current. Then:</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def spectral_flatness(harmonics_amp):
+<pre><code class="python">def spectral_flatness(spectrum_amp):
     &#34;&#34;&#34;Calculates the Spectral flatness (SPF).
 
-    TODO: Explain bins &amp; x_f
-
-    Let \\(x_{f_1}, ..., x_{f_{20}}\\) be the amplitudes of the first 20
-    harmonics of the current. Then:
+    Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
+    \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SPF = \\frac{\\sqrt[N]{\\prod_{f \\in f_{bins}} x_f}}
-                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}
-           \\overset{\\propto}{\\sim}
-           \\frac{\\sqrt[20]{\\prod_{i=1}^{20} x_{f_i}}}
-                 {\\frac{1}{20} \\sum_{i=1}^{20} x_{f_i}}\\]
+                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
         Spectral flatness as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    return (geo_mean(harmonics_amp) / np.mean(harmonics_amp, axis=1)).reshape(-1, 1)</code></pre>
+    return (geo_mean(spectrum_amp) / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.spectral_frequencies"><code class="name flex">
-<span>def <span class="ident">spectral_frequencies</span></span>(<span>window, n=20, limit_to_harmonics=True)</span>
+<span>def <span class="ident">spectral_frequencies</span></span>(<span>window, n=20, limit_to_harmonics=True, sampling_rate=6400, power_frequency=50)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the spectral frequencies (in Hz) for an application of
-fftpack.fftfreq.</p>
+fft.rfft.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>window</code></strong> :&ensp;<code>int</code></dt>
@@ -630,9 +650,11 @@ fftpack.fftfreq.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def spectral_frequencies(window, n=20, limit_to_harmonics=True):
+<pre><code class="python">def spectral_frequencies(window, n=20, limit_to_harmonics=True,
+                         sampling_rate=SAMPLING_RATE,
+                         power_frequency=POWER_FREQUENCY):
     &#34;&#34;&#34;Calculates the spectral frequencies (in Hz) for an application of
-    fftpack.fftfreq.
+    fft.rfft.
 
     Args:
         window (int): Length of input array.
@@ -642,15 +664,14 @@ fftpack.fftfreq.</p>
     Returns:
         Spectral frequencies as a list.
     &#34;&#34;&#34;
-    freqs = fftpack.fftfreq(window) * SAMPLING_RATE
+    freqs = fft.rfftfreq(window) * sampling_rate
     if limit_to_harmonics:
-        idcs = (freqs % 50 == 0) &amp; (freqs &gt; 0) &amp; (freqs &lt;= n*50)
-        return freqs[idcs]
+        return freqs[get_harmonics_indices(freqs, n=n)]
     return freqs</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.spectrum"><code class="name flex">
-<span>def <span class="ident">spectrum</span></span>(<span>current, window=None)</span>
+<span>def <span class="ident">spectrum</span></span>(<span>current, window=None, sampling_rate=6400)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the spectrum (absolute amplitude for positive frequencies)
@@ -674,7 +695,7 @@ get the corresponding frequencies with the spectral_frequencies method.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def spectrum(current, window=None):
+<pre><code class="python">def spectrum(current, window=None, sampling_rate=SAMPLING_RATE):
     &#34;&#34;&#34;Calculates the spectrum (absolute amplitude for positive frequencies)
     for (two-dimensional) arrays of current measurements.
 
@@ -692,7 +713,12 @@ get the corresponding frequencies with the spectral_frequencies method.</p>
     Returns:
         Spectrum as a (n_samples, n_frequencies)-dimensional array.
     &#34;&#34;&#34;
-    return np.apply_along_axis(_spectrum_single, 1, current)</code></pre>
+    # If window is not specified floor to next power of two
+    if window is None:
+        window = int(2**np.floor(np.log2(current.shape[1])))
+
+    normalized_current = normalize(current[:, :window])
+    return np.abs(fft.rfft(normalized_current, axis=1))</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.total_harmonic_distortion"><code class="name flex">
@@ -799,10 +825,12 @@ T_2 = \frac{x_{f_2} + x_{f_3} + x_{f_4}}{\sum_{i=1}^{20} x_{f_i}}</script></span
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="CREAM_Feature_Study.features.spectral.get_harmonics_indices" href="#CREAM_Feature_Study.features.spectral.get_harmonics_indices">get_harmonics_indices</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.harmonic_spectral_centroid" href="#CREAM_Feature_Study.features.spectral.harmonic_spectral_centroid">harmonic_spectral_centroid</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.harmonics" href="#CREAM_Feature_Study.features.spectral.harmonics">harmonics</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.harmonics_energy_distribution" href="#CREAM_Feature_Study.features.spectral.harmonics_energy_distribution">harmonics_energy_distribution</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.odd_even_ratio" href="#CREAM_Feature_Study.features.spectral.odd_even_ratio">odd_even_ratio</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.spectral.second_harmonic" href="#CREAM_Feature_Study.features.spectral.second_harmonic">second_harmonic</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.signal_to_signal_mean_ratio" href="#CREAM_Feature_Study.features.spectral.signal_to_signal_mean_ratio">signal_to_signal_mean_ratio</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.spectral_centroid" href="#CREAM_Feature_Study.features.spectral.spectral_centroid">spectral_centroid</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.spectral_flatness" href="#CREAM_Feature_Study.features.spectral.spectral_flatness">spectral_flatness</a></code></li>

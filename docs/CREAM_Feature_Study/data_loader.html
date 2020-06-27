@@ -62,7 +62,7 @@ def read_event(id, duration):
     return voltage, current
 
 
-def read_dataset(component_events, start_offset=4400, duration=2):
+def read_dataset(component_events, start_offset=0, duration=2):
     event_types, voltages, currents = [], [], []
 
     idcs = ((component_events.Component != &#39;unlabeled&#39;) &amp;
@@ -380,7 +380,7 @@ def synchronize_period(voltage, current, periods=-1):
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.data_loader.read_dataset"><code class="name flex">
-<span>def <span class="ident">read_dataset</span></span>(<span>component_events, start_offset=4400, duration=2)</span>
+<span>def <span class="ident">read_dataset</span></span>(<span>component_events, start_offset=0, duration=2)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -388,7 +388,7 @@ def synchronize_period(voltage, current, periods=-1):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def read_dataset(component_events, start_offset=4400, duration=2):
+<pre><code class="python">def read_dataset(component_events, start_offset=0, duration=2):
     event_types, voltages, currents = [], [], []
 
     idcs = ((component_events.Component != &#39;unlabeled&#39;) &amp;

@@ -34,8 +34,8 @@ import numpy as np
 from scipy.stats import gmean
 import matplotlib.pyplot as plt
 
-
 import feature_selection
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 # from sklearn.metrics import classification_report, plot_confusion_matrix
@@ -50,7 +50,54 @@ PERIOD_LENGTH = 128
 #                                                                            #
 ##############################################################################
 
-def feature_boxplot(title, X, y):
+def get_all_features(voltage, current):
+    # Import here to avoid circular import
+    from features import vi, spectral
+
+    spec = spectral.spectrum(current)
+    harmon = spectral.harmonics(current)
+    ps = vi.phase_shift(voltage, current)
+
+    return {&#34;Active power&#34;: vi.active_power(voltage, current, ps),
+            &#34;Reactive power&#34;: vi.reactive_power(voltage, current, ps),
+            &#34;Apparent power&#34;: vi.apparent_power(voltage, current),
+            &#34;Phase shift&#34;: ps,
+            &#34;VI Trajectory&#34;: np.hstack(vi.vi_trajectory(voltage, current)),
+            &#34;Harmonics (first 20)&#34;: harmon,
+            &#34;Harmonics energy distribution&#34;: spectral.harmonics_energy_distribution(harmon),
+            &#34;Spectral flatness&#34;: spectral.spectral_flatness(spec),
+            &#34;Odd even harmonics ratio&#34;: spectral.odd_even_ratio(harmon),
+            &#34;Tristimulus&#34;: spectral.tristiumulus(harmon),
+            &#34;Form factor&#34;: vi.form_factor(current),
+            &#34;Crest factor&#34;: vi.crest_factor(current),
+            &#34;Total harmonic distortion&#34;: spectral.total_harmonic_distortion(harmon),
+            &#34;Resistance (mean)&#34;: vi.resistance_mean(voltage, current),
+            &#34;Resistance (median)&#34;: vi.resistance_median(voltage, current),
+            &#34;Admittance (mean)&#34;: vi.admittance_mean(voltage, current),
+            &#34;Admittance (median)&#34;: vi.admittance_median(voltage, current),
+            &#34;Log attack time&#34;: vi.log_attack_time(current),
+            &#34;Temporal centroid&#34;: vi.temporal_centroid(current),
+            &#34;Spectral centroid&#34;: spectral.spectral_centroid(spec, current),
+            &#34;Harmonic spectral centroid&#34;: spectral.harmonic_spectral_centroid(current),
+            &#34;Signal to signal mean ratio&#34;: spectral.signal_to_signal_mean_ratio(spec),
+            &#34;Inrush current ratio&#34;: vi.inrush_current_ratio(current),
+            &#34;Positive-negative half cycle ratio&#34;: vi.positive_negative_half_cycle_ratio(current),
+            &#34;Max-min ratio&#34;: vi.max_min_ratio(current),
+            &#34;Peak-mean ratio&#34;: vi.peak_mean_ratio(current),
+            &#34;Max inrush ratio&#34;: vi.max_inrush_ratio(current),
+            &#34;Mean variance ratio&#34;: vi.mean_variance_ratio(current),
+            &#34;Waveform distortion&#34;: vi.waveform_distortion(current),
+            &#34;Waveform approximation&#34;: vi.waveform_approximation(current),
+            &#34;Current over time&#34;: vi.current_over_time(current),
+            &#34;Admittance over time&#34;: vi.admittance_over_time(voltage, current),
+            &#34;Periods to steady state&#34;: vi.periods_to_steady_state_current(current),
+            &#34;2nd harmonic&#34;: spectral.second_harmonic(harmon),
+            &#34;Transient steady states ratio&#34;: vi.transient_steady_states_ratio(current),
+            &#34;Current RMS&#34;: vi.current_rms(current)
+            }
+
+
+def feature_boxplot(title, X, y, out=True):
     # Set up grid size
     x_dim = int(np.ceil(X.shape[1] / 5))
     y_dim = X.shape[1] if X.shape[1] &lt;= 5 else 5
@@ -64,18 +111,18 @@ def feature_boxplot(title, X, y):
         # Create boxplot for column col of feature
         ax.boxplot([X[y == &#39;heater&#39;][:, col], X[y == &#39;millingplant&#39;][:, col],
                     X[y == &#39;pump&#39;][:, col]],
-                   labels=[&#39;Heater&#39;, &#39;Millingplant&#39;, &#39;Pump&#39;])
+                   labels=[&#39;Heater&#39;, &#39;Millingplant&#39;, &#39;Pump&#39;], showfliers=out)
     fig.suptitle(title)
     plt.show()
 
 
-def feature_evaluation(X, y):
+def feature_evaluation(X, y, output=True):
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
     # Prepare a kNN
-    knn = KNeighborsClassifier()
+    knn = KNeighborsClassifier(n_jobs=-1)
     param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
 
     # Do cross-validation on kNN
@@ -86,7 +133,8 @@ def feature_evaluation(X, y):
     y_pred = estimator.predict(X)
 
     # Print accuracy, precision, recall, and f1-score
-    print(&#34;Cross-validation F1-score: {:.2f}&#34;.format(score))
+    if output:
+        print(&#34;Cross-validation F1-score: {:.2f}&#34;.format(score))
     # print(&#34;\nPerformance on training data:\n&#34;)
     # print(classification_report(y, y_pred))
 
@@ -95,6 +143,7 @@ def feature_evaluation(X, y):
     # plt.show()
     # plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
     # plt.show()
+    return score
 
 
 ##############################################################################
@@ -175,7 +224,7 @@ def apply_to_periods(X, func, n_periods, args):
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.feature_boxplot"><code class="name flex">
-<span>def <span class="ident">feature_boxplot</span></span>(<span>title, X, y)</span>
+<span>def <span class="ident">feature_boxplot</span></span>(<span>title, X, y, out=True)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -183,7 +232,7 @@ def apply_to_periods(X, func, n_periods, args):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def feature_boxplot(title, X, y):
+<pre><code class="python">def feature_boxplot(title, X, y, out=True):
     # Set up grid size
     x_dim = int(np.ceil(X.shape[1] / 5))
     y_dim = X.shape[1] if X.shape[1] &lt;= 5 else 5
@@ -197,13 +246,13 @@ def apply_to_periods(X, func, n_periods, args):
         # Create boxplot for column col of feature
         ax.boxplot([X[y == &#39;heater&#39;][:, col], X[y == &#39;millingplant&#39;][:, col],
                     X[y == &#39;pump&#39;][:, col]],
-                   labels=[&#39;Heater&#39;, &#39;Millingplant&#39;, &#39;Pump&#39;])
+                   labels=[&#39;Heater&#39;, &#39;Millingplant&#39;, &#39;Pump&#39;], showfliers=out)
     fig.suptitle(title)
     plt.show()</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.feature_evaluation"><code class="name flex">
-<span>def <span class="ident">feature_evaluation</span></span>(<span>X, y)</span>
+<span>def <span class="ident">feature_evaluation</span></span>(<span>X, y, output=True)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -211,13 +260,13 @@ def apply_to_periods(X, func, n_periods, args):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def feature_evaluation(X, y):
+<pre><code class="python">def feature_evaluation(X, y, output=True):
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
     # Prepare a kNN
-    knn = KNeighborsClassifier()
+    knn = KNeighborsClassifier(n_jobs=-1)
     param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
 
     # Do cross-validation on kNN
@@ -228,7 +277,17 @@ def apply_to_periods(X, func, n_periods, args):
     y_pred = estimator.predict(X)
 
     # Print accuracy, precision, recall, and f1-score
-    print(&#34;Cross-validation F1-score: {:.2f}&#34;.format(score))</code></pre>
+    if output:
+        print(&#34;Cross-validation F1-score: {:.2f}&#34;.format(score))
+    # print(&#34;\nPerformance on training data:\n&#34;)
+    # print(classification_report(y, y_pred))
+
+    # Plot confusion matrix (absolute &amp; relative)
+    # plot_confusion_matrix(estimator, X, y)
+    # plt.show()
+    # plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
+    # plt.show()
+    return score</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.geo_mean"><code class="name flex">
@@ -244,6 +303,62 @@ def apply_to_periods(X, func, n_periods, args):
     &#34;&#34;&#34;Calculate geometric mean.
     &#34;&#34;&#34;
     return gmean(x, axis=1)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.get_all_features"><code class="name flex">
+<span>def <span class="ident">get_all_features</span></span>(<span>voltage, current)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_all_features(voltage, current):
+    # Import here to avoid circular import
+    from features import vi, spectral
+
+    spec = spectral.spectrum(current)
+    harmon = spectral.harmonics(current)
+    ps = vi.phase_shift(voltage, current)
+
+    return {&#34;Active power&#34;: vi.active_power(voltage, current, ps),
+            &#34;Reactive power&#34;: vi.reactive_power(voltage, current, ps),
+            &#34;Apparent power&#34;: vi.apparent_power(voltage, current),
+            &#34;Phase shift&#34;: ps,
+            &#34;VI Trajectory&#34;: np.hstack(vi.vi_trajectory(voltage, current)),
+            &#34;Harmonics (first 20)&#34;: harmon,
+            &#34;Harmonics energy distribution&#34;: spectral.harmonics_energy_distribution(harmon),
+            &#34;Spectral flatness&#34;: spectral.spectral_flatness(spec),
+            &#34;Odd even harmonics ratio&#34;: spectral.odd_even_ratio(harmon),
+            &#34;Tristimulus&#34;: spectral.tristiumulus(harmon),
+            &#34;Form factor&#34;: vi.form_factor(current),
+            &#34;Crest factor&#34;: vi.crest_factor(current),
+            &#34;Total harmonic distortion&#34;: spectral.total_harmonic_distortion(harmon),
+            &#34;Resistance (mean)&#34;: vi.resistance_mean(voltage, current),
+            &#34;Resistance (median)&#34;: vi.resistance_median(voltage, current),
+            &#34;Admittance (mean)&#34;: vi.admittance_mean(voltage, current),
+            &#34;Admittance (median)&#34;: vi.admittance_median(voltage, current),
+            &#34;Log attack time&#34;: vi.log_attack_time(current),
+            &#34;Temporal centroid&#34;: vi.temporal_centroid(current),
+            &#34;Spectral centroid&#34;: spectral.spectral_centroid(spec, current),
+            &#34;Harmonic spectral centroid&#34;: spectral.harmonic_spectral_centroid(current),
+            &#34;Signal to signal mean ratio&#34;: spectral.signal_to_signal_mean_ratio(spec),
+            &#34;Inrush current ratio&#34;: vi.inrush_current_ratio(current),
+            &#34;Positive-negative half cycle ratio&#34;: vi.positive_negative_half_cycle_ratio(current),
+            &#34;Max-min ratio&#34;: vi.max_min_ratio(current),
+            &#34;Peak-mean ratio&#34;: vi.peak_mean_ratio(current),
+            &#34;Max inrush ratio&#34;: vi.max_inrush_ratio(current),
+            &#34;Mean variance ratio&#34;: vi.mean_variance_ratio(current),
+            &#34;Waveform distortion&#34;: vi.waveform_distortion(current),
+            &#34;Waveform approximation&#34;: vi.waveform_approximation(current),
+            &#34;Current over time&#34;: vi.current_over_time(current),
+            &#34;Admittance over time&#34;: vi.admittance_over_time(voltage, current),
+            &#34;Periods to steady state&#34;: vi.periods_to_steady_state_current(current),
+            &#34;2nd harmonic&#34;: spectral.second_harmonic(harmon),
+            &#34;Transient steady states ratio&#34;: vi.transient_steady_states_ratio(current),
+            &#34;Current RMS&#34;: vi.current_rms(current)
+            }</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.normalize"><code class="name flex">
@@ -303,6 +418,7 @@ def apply_to_periods(X, func, n_periods, args):
 <li><code><a title="CREAM_Feature_Study.features.helpers.feature_boxplot" href="#CREAM_Feature_Study.features.helpers.feature_boxplot">feature_boxplot</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.feature_evaluation" href="#CREAM_Feature_Study.features.helpers.feature_evaluation">feature_evaluation</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.geo_mean" href="#CREAM_Feature_Study.features.helpers.geo_mean">geo_mean</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.get_all_features" href="#CREAM_Feature_Study.features.helpers.get_all_features">get_all_features</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.normalize" href="#CREAM_Feature_Study.features.helpers.normalize">normalize</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.rms" href="#CREAM_Feature_Study.features.helpers.rms">rms</a></code></li>
 </ul>
