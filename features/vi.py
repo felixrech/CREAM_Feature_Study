@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from scipy import signal
 
@@ -5,10 +6,13 @@ from features import helpers
 from features.helpers import rms, average_periods, normalize
 
 
-PERIOD_LENGTH = 6400 // 50      # Each period is 128 sampling points
+POWER_FREQUENCY = 50  # Hz
+SAMPLING_RATE = 6400  # Measurements / second
+PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 
 
-def _phase_shift_single(voltage, current, radian=True):
+def _phase_shift_single(voltage, current, radian=True,
+                        period_length=PERIOD_LENGTH):
     """Calculates phase shift of a single sample.
 
     Args:
@@ -21,31 +25,36 @@ def _phase_shift_single(voltage, current, radian=True):
     """
     # Correlate voltage and current
     corr = signal.correlate(voltage, current)
-    corr = corr[corr.size//2:corr.size//2+PERIOD_LENGTH]
+    corr = corr[corr.size//2:corr.size//2+period_length]
     # Maximize correlation (as number of measurements that v leads i)
-    phase_shift = corr.argmax() % PERIOD_LENGTH
-    phase_shift = phase_shift if phase_shift == 0 else 128 - phase_shift
+    phase_shift = corr.argmax() % period_length
+    if phase_shift != 0:
+        phase_shift = period_length - phase_shift
     if radian:
-        return (phase_shift / 128) * 2 * np.pi
+        return (phase_shift / period_length) * 2 * np.pi
     return phase_shift
 
 
-def phase_shift(voltage, current):
+def phase_shift(voltage, current, radian=True, period_length=PERIOD_LENGTH):
     """Calculates Phase shift.
 
     Args:
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
         current: (n_samples, window_size)-dimensional array of current measurements.
+        radian (bool): Whether to return as radian (True) or absolute value.
 
     Returns:
         Phase shift as a (n_samples, 1)-dimensional array.
     """
-    ps = [_phase_shift_single(v, i) for v, i in zip(voltage, current)]
+    ps = [_phase_shift_single(v, i, radian, period_length)
+          for v, i in zip(voltage, current)]
     return np.array(ps).reshape(-1, 1)
 
 
-def active_power(voltage, current, phase_shift):
+def active_power(voltage, current, phase_shift=None):
     """Calculates Active power (P).
+
+    If phase shift is None, it is calculated.
 
     \\[P = \\text{rms}(V) \\times \\text{rms}(I) \\times \\cos(\\phi)\\]
 
@@ -57,11 +66,16 @@ def active_power(voltage, current, phase_shift):
     Returns:
         Active power as a (n_samples, 1)-dimensional array.
     """
+    if phase_shift is None:
+        phase_shift = phase_shift(voltage, current)
+
     return rms(voltage) * rms(current) * np.cos(phase_shift)
 
 
-def reactive_power(voltage, current, phase_shift):
+def reactive_power(voltage, current, phase_shift=None):
     """Calculates Reactive power (Q).
+
+    If phase shift is None, it is calculated.
 
     \\[Q = \\text{rms}(V) \\times \\text{rms}(I) \\times \\sin(\\phi)\\]
 
@@ -73,6 +87,9 @@ def reactive_power(voltage, current, phase_shift):
     Returns:
         Reactive power as a (n_samples, 1)-dimensional array.
     """
+    if phase_shift is None:
+        phase_shift = phase_shift(voltage, current)
+
     return rms(voltage) * rms(current) * np.sin(phase_shift)
 
 
@@ -84,7 +101,6 @@ def apparent_power(voltage, current):
     Args:
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
         current: (n_samples, window_size)-dimensional array of current measurements.
-        phase_shift: (n_samples, 1)-dimensional array of phase shifts.
 
     Returns:
         Apparent power as a (n_samples, 1)-dimensional array.
@@ -92,11 +108,11 @@ def apparent_power(voltage, current):
     return rms(voltage) * rms(current)
 
 
-def vi_trajectory(voltage, current, num_samples=20, window_length_periods=10,
-                  normalize=True):
+def vi_trajectory(voltage, current, num_samples=20, num_periods=10,
+                  normalize=True, period_length=PERIOD_LENGTH):
     """Calculates the VI-trajectory.
 
-    Averages the first window_length_periods periods of measurements, extracts
+    Averages the first num_periods periods of measurements, extracts
     n_samples equidistant sampling points, and normalizes by dividing by
     maximum.
 
@@ -104,35 +120,29 @@ def vi_trajectory(voltage, current, num_samples=20, window_length_periods=10,
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
         current: (n_samples, window_size)-dimensional array of current measurements.
         num_samples (int): Number of sampling points used.
-        window_length_periods (int): Number of periods used for sampling
+        num_periods (int): Number of periods used for sampling
         normalize (bool): Whether to normalize (divide by max).
 
     Returns:
-        VI-trajectory as tuple of (n_samples, 20)-dimensional arrays of normalized voltage and current values.
+        VI-trajectory as tuple of (n_samples, num_samples)-dimensional arrays of normalized voltage and current values.
     """
     # Calculate equidistant sampling points within each period
-    sample = np.linspace(0, PERIOD_LENGTH-1, num=num_samples,
+    sample = np.linspace(0, period_length-1, num=num_samples,
                          endpoint=False, dtype='int')
 
-    # Calculate V mean of each sampling point over window_length_periods periods
-    voltage_windows = [voltage[:, i*PERIOD_LENGTH + sample]
-                       for i in range(window_length_periods)]
-    v = np.dstack(voltage_windows)
-    v_mean = np.mean(v, axis=2)
-
-    # Calculate I mean of each sampling point over window_length_periods periods
-    current_windows = [current[:, i*PERIOD_LENGTH + sample]
-                       for i in range(window_length_periods)]
-    i = np.dstack(current_windows)
-    i_mean = np.mean(i, axis=2)
+    # Calculate mean of each sampling point over num_periods periods
+    v = voltage[:, :num_periods*period_length]
+    i = current[:, :num_periods*period_length]
+    v = v.reshape(-1, num_periods, period_length)[:, :, sample]
+    i = i.reshape(-1, num_periods, period_length)[:, :, sample]
+    v = np.mean(v, axis=1)
+    i = np.mean(i, axis=1)
 
     # Normalize voltage and current to [0,1] by dividing by range
     if normalize:
-        v_mean = np.divide(v_mean, np.max(
-            np.abs(v_mean), axis=1).reshape(-1, 1))
-        i_mean = np.divide(i_mean, np.max(
-            np.abs(i_mean), axis=1).reshape(-1, 1))
-    return v_mean, i_mean
+        v = v / np.max(np.abs(v)).reshape(-1, 1)
+        i = i / np.max(np.abs(i)).reshape(-1, 1)
+    return v, i
 
 
 def form_factor(current):
@@ -176,9 +186,7 @@ def resistance_mean(voltage, current):
     Returns:
         Resistance as a (n_samples, 1)-dimensional array.
     """
-    numerator = np.sqrt(np.mean(np.square(voltage), axis=1))
-    denominator = np.sqrt(np.mean(np.square(current), axis=1))
-    return (numerator / denominator).reshape(-1, 1)
+    return rms(voltage) / rms(current)
 
 
 def resistance_median(voltage, current):
@@ -233,7 +241,7 @@ def admittance_median(voltage, current):
     return 1 / resistance_median(voltage, current)
 
 
-def log_attack_time(current):
+def log_attack_time(current, sampling_rate=SAMPLING_RATE):
     """Calculates the LogAttackTime \\(\\ln(\\underset{t}{\\arg \\max}(I_t))\\).
 
     Unit used: ms.
@@ -245,12 +253,14 @@ def log_attack_time(current):
         LogAttackTime as a (n_samples, 1)-dimensional array.
     """
     starting_times = np.argmax(current, axis=1).reshape(-1, 1)
+    sam_rate = sampling_rate / 1000
 
     # Make sure input to log is > 0
-    return np.log(np.where(starting_times > 0, starting_times, 1) / 6.4)
+    return np.log(np.where(starting_times > 0, starting_times, 1) / sam_rate)
 
 
-def temporal_centroid(current):
+def temporal_centroid(current, period_length=PERIOD_LENGTH,
+                      power_frequency=POWER_FREQUENCY):
     """Calculates the Temporal centroid \\(C_t\\).
 
     Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
@@ -264,22 +274,17 @@ def temporal_centroid(current):
     Returns:
         Temporal centroid as a (n_samples, 1)-dimensional array.
     """
-    n_samples = current.shape[0]
-
-    # Reshape into (n_samples, n_periods, length_period)
-    iw = current.reshape(n_samples, -1, PERIOD_LENGTH)
-
-    # Calculate RMS for each period
-    ip = np.sqrt(np.mean(np.square(iw), axis=2))
+    # Calculate RMS of each period
+    ip = rms(current.reshape(current.shape[0], -1, period_length), axis=2)
 
     # Calculate numerator and denominator and put together
     numerator = np.sum(ip * np.arange(1, ip.shape[1]+1), axis=1)
     denominator = np.sum(ip, axis=1)
-    return 50 * (numerator / denominator).reshape(-1, 1)
+    return power_frequency * (numerator / denominator).reshape(-1, 1)
 
 
-def inrush_current_ratio(current):
-    """"Calculates the Inrush current ratio (ICR).
+def inrush_current_ratio(current, period_length=PERIOD_LENGTH):
+    """Calculates the Inrush current ratio (ICR).
 
     Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
     measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
@@ -292,40 +297,10 @@ def inrush_current_ratio(current):
     Returns:
         Inrush current ratio as a (n_samples, 1)-dimensional array.
     """
-    return rms(current[:, :128]) / rms(current[:, -128:])
+    return rms(current[:, :period_length]) / rms(current[:, -period_length:])
 
 
-def _positive_negative_half_cycle_ratio_single(current):
-    """Calculates Positive-negative half cycle ratio (PNR).
-
-    Let \\(I_{P_\text{pos}}\\) and \\(I_{P_\text{neg}}\\) be the RMS of 10
-    averaged positive and negative current half cycles. Then
-
-    \\[PNR = \\frac{\\min\\{I_{P_\\text{pos}}, I_{P_\\text{neg}}\\}}
-                   {\\max\\{I_{P_\\text{pos}}, I_{P_\\text{neg}}\\}}\\]
-
-    Args:
-        current: (window_size, )-dimensional array of current measurements.
-
-    Returns:
-        PNR as a float.
-    """
-    # Create indices for positive and negative half cycles of sin wave
-    idcs = np.arange(0, PERIOD_LENGTH * 10)
-    p_idcs = idcs[idcs % PERIOD_LENGTH < PERIOD_LENGTH / 2]
-    n_idcs = idcs[idcs % PERIOD_LENGTH >= PERIOD_LENGTH / 2]
-
-    p_current = current[p_idcs].reshape(10, int(PERIOD_LENGTH / 2))
-    n_current = current[n_idcs].reshape(10, int(PERIOD_LENGTH / 2)) * -1
-
-    # Calculate rms of averaged half cycles
-    p_current_rms = rms(np.mean(p_current, axis=0), axis=0)
-    n_current_rms = rms(np.mean(n_current, axis=0), axis=0)
-
-    return min(p_current_rms, n_current_rms) / max(p_current_rms, n_current_rms)
-
-
-def positive_negative_half_cycle_ratio(current):
+def positive_negative_half_cycle_ratio(current, period_length=PERIOD_LENGTH):
     """Calculates Positive-negative half cycle ratio (PNR).
 
     Let \\(I_{P_\\text{pos}}\\) and \\(I_{P_\\text{neg}}\\) be the RMS of 10
@@ -340,8 +315,19 @@ def positive_negative_half_cycle_ratio(current):
     Returns:
         PNR as a (n_samples, 1)-dimensional array.
     """
-    return np.apply_along_axis(_positive_negative_half_cycle_ratio_single,
-                               1, current).reshape(-1, 1)
+    # Create indices for positive and negative half cycles of sin wave
+    idcs = np.arange(0, period_length * 10)
+    p_idcs = idcs[idcs % period_length < period_length / 2]
+    n_idcs = idcs[idcs % period_length >= period_length / 2]
+
+    p_current = current[:, p_idcs].reshape(-1, 10, period_length // 2)
+    n_current = current[:, n_idcs].reshape(-1, 10, period_length // 2) * -1
+
+    # Calculate RMS of averaged half cycles
+    p_n = np.hstack((rms(np.mean(p_current, axis=1)),
+                     rms(np.mean(n_current, axis=1))))
+
+    return (np.min(p_n, axis=1) / np.max(p_n, axis=1)).reshape(-1, 1)
 
 
 def max_min_ratio(current):
@@ -356,9 +342,9 @@ def max_min_ratio(current):
     Returns:
         Max-min ratio as a (n_samples, 1)-dimensional array.
     """
-    extrema = np.vstack((np.abs(np.max(current, axis=1)),
-                         np.abs(np.min(current, axis=1))))
-    return (np.min(extrema, axis=0) / np.max(extrema, axis=0)).reshape(-1, 1)
+    extrema = np.hstack((np.abs(np.max(current, axis=1)).reshape(-1, 1),
+                         np.abs(np.min(current, axis=1)).reshape(-1, 1)))
+    return (np.min(extrema, axis=1) / np.max(extrema, axis=1)).reshape(-1, 1)
 
 
 def peak_mean_ratio(current):
@@ -372,12 +358,11 @@ def peak_mean_ratio(current):
     Returns:
         Peak-mean ratio as a (n_samples, 1)-dimensional array.
     """
-    max = np.max(np.abs(current), axis=1)
-    mean = np.mean(np.abs(current), axis=1)
-    return (max / mean).reshape(-1, 1)
+    return (np.max(np.abs(current), axis=1)
+            / np.mean(np.abs(current), axis=1)).reshape(-1, 1)
 
 
-def max_inrush_ratio(current):
+def max_inrush_ratio(current, period_length=PERIOD_LENGTH):
     """Calculates the Max inrush ratio (MIR).
 
     Let \\(I_{W(k)}\\) be the current measurements of the \\(k\\)th period and
@@ -391,8 +376,8 @@ def max_inrush_ratio(current):
     Returns:
         Max inrush ratio as a (n_samples, 1)-dimensional array.
     """
-    first_period_rms = rms(current[:, :PERIOD_LENGTH])
-    first_period_max = np.max(np.abs(current[:, :PERIOD_LENGTH]), axis=1)
+    first_period_rms = rms(current[:, :period_length])
+    first_period_max = np.max(np.abs(current[:, :period_length]), axis=1)
     return first_period_rms / first_period_max.reshape(-1, 1)
 
 
@@ -412,7 +397,7 @@ def mean_variance_ratio(current):
             / np.var(np.abs(current), axis=1)).reshape(-1, 1)
 
 
-def waveform_distortion(current):
+def waveform_distortion(current, period_length=PERIOD_LENGTH):
     """Calculates the Waveform distortion WFD.
 
     Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
@@ -428,13 +413,12 @@ def waveform_distortion(current):
     Returns:
         Waveform distortion as a (n_samples, 1)-dimensional array.
     """
-    # TODO: Check in with Daniel about normalizing with max instead of RMS
     current = normalize(average_periods(current, 10), method='max')
-    y = np.sin(np.linspace(0, 2*np.pi, 128))
+    y = np.sin(np.linspace(0, 2*np.pi, period_length))
     return np.sum(np.abs(current) - np.abs(y), axis=1).reshape(-1, 1)
 
 
-def waveform_approximation(current):
+def waveform_approximation(current, period_length=PERIOD_LENGTH):
     """Calculates the Waveform approximation (WFA).
 
     Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
@@ -450,9 +434,9 @@ def waveform_approximation(current):
     Returns:
         Waveform approximation as a (n_samples, 20)-dimensional array.
     """
-    # TODO: Check in with Daniel about normalizing with max instead of RMS
     current = normalize(average_periods(current, n_periods=10), method='max')
-    sampling_points = np.linspace(0, 127, num=20, endpoint=False, dtype='int')
+    sampling_points = np.linspace(0, period_length-1, num=20,
+                                  endpoint=False, dtype='int')
     return current[:, sampling_points]
 
 
@@ -517,19 +501,55 @@ def periods_to_steady_state_current(current):
     return np.argmax(cot > l.reshape(-1, 1), axis=1).reshape(-1, 1) + 1
 
 
-##############################################################################
-#                                                                            #
-#                        START EXPERIMENTAL FEATURES                         #
-#                                                                            #
-##############################################################################
+def transient_steady_states_ratio(current, n_periods=5,
+                                  period_length=PERIOD_LENGTH):
+    """Calculates the Transient steady states ratio (TSSR).
+
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements and \\(\\langle t_1, t_2, ..., t_n \\rangle\\) the
+    concatenation of tuples \\(t_1, ..., t_n\\). Then:
+
+    \\[TSSR = \\frac{\\text{rms}(\\langle I_{W(1)}, I_{W(2)}, ...,
+    I_{W(\\text{n_periods})}\\rangle)}
+    {\\text{rms}(\\langle I_{W(N - \\text{n_periods})},
+    I_{W(N - \\text{n_periods} + 1)}, ..., I_{W(N)}\\rangle)}\\]
+
+    Args:
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        n_periods: Length of transient and steady state in periods
+
+    Returns:
+        Transient steady states ratio as a (n_samples, 1)-dimensional array.
+    """
+    return (rms(current[:, :n_periods*period_length])
+            / rms(current[:, -n_periods*period_length:])).reshape(-1, 1)
 
 
-def ratio_transient_steady_states(current):
-    # Ratio of RMS of first 5 with last 5 states
-    return (rms(current[:, :5*128]) / rms(current[:, -5*128:])).reshape(-1, 1)
+def current_rms(current, period_length=PERIOD_LENGTH):
+    """Calculates the Current RMS (CRMS).
 
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements, \\(\\langle t_1, t_2, ..., t_n \\rangle\\) the
+    concatenation of tuples \\(t_1, ..., t_n\\), and \\(\\nu = N \\mod 10\\).
+    Then:
 
-def current_rms(current):
-    # TODO: Calculate new shape independent of current shape
-    # RMS of periods 1-10, 11-20, 21-30, ...
-    return rms(current.reshape(-1, 5, 10*128), axis=2)
+    \\[CRMS = \\begin{pmatrix}\\text{rms}(\\langle I_{W(1)}, I_{W(2)}, ...,
+    I_{W(10)}\\rangle) \\\\ \\text{rms}(\\langle I_{W(11)}, I_{W(12)}, ...,
+    I_{W(20)}\\rangle) \\\\ ... \\\\ \\text{rms}(\\langle I_{W(N - \\nu + 1)},
+    I_{W(N - \\nu + 2)}, ..., I_{W(N)}\\rangle)\\end{pmatrix}\\]
+
+    Args:
+        current: (n_samples, window_size)-dimensional array of current measurements.
+        n_periods: Length of transient and steady state in periods
+
+    Returns:
+        Transient steady states ratio as a (n_samples, 1)-dimensional array.
+    """
+    n = int(math.floor(current.shape[1] / period_length / 10))
+    cutoff = n*10*period_length
+    first = rms(current[:, :cutoff].reshape(-1, n, 10*period_length), axis=2)
+
+    # Handle window_size is not multiple of 10*period_length
+    if cutoff != current.shape[1]:
+        return np.hstack((first, rms(current[:, cutoff:])))
+    return first

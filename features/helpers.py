@@ -6,8 +6,8 @@ import numpy as np
 from scipy.stats import gmean
 import matplotlib.pyplot as plt
 
-
 import feature_selection
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 # from sklearn.metrics import classification_report, plot_confusion_matrix
@@ -21,6 +21,53 @@ PERIOD_LENGTH = 128
 #                START FEATURE EVALUATION HELPER FUNCTIONS                   #
 #                                                                            #
 ##############################################################################
+
+def get_all_features(voltage, current):
+    # Import here to avoid circular import
+    from features import vi, spectral
+
+    spec = spectral.spectrum(current)
+    harmon = spectral.harmonics(current)
+    ps = vi.phase_shift(voltage, current)
+
+    return {"Active power": vi.active_power(voltage, current, ps),
+            "Reactive power": vi.reactive_power(voltage, current, ps),
+            "Apparent power": vi.apparent_power(voltage, current),
+            "Phase shift": ps,
+            "VI Trajectory": np.hstack(vi.vi_trajectory(voltage, current)),
+            "Harmonics (first 20)": harmon,
+            "Harmonics energy distribution": spectral.harmonics_energy_distribution(harmon),
+            "Spectral flatness": spectral.spectral_flatness(spec),
+            "Odd even harmonics ratio": spectral.odd_even_ratio(harmon),
+            "Tristimulus": spectral.tristiumulus(harmon),
+            "Form factor": vi.form_factor(current),
+            "Crest factor": vi.crest_factor(current),
+            "Total harmonic distortion": spectral.total_harmonic_distortion(harmon),
+            "Resistance (mean)": vi.resistance_mean(voltage, current),
+            "Resistance (median)": vi.resistance_median(voltage, current),
+            "Admittance (mean)": vi.admittance_mean(voltage, current),
+            "Admittance (median)": vi.admittance_median(voltage, current),
+            "Log attack time": vi.log_attack_time(current),
+            "Temporal centroid": vi.temporal_centroid(current),
+            "Spectral centroid": spectral.spectral_centroid(spec, current),
+            "Harmonic spectral centroid": spectral.harmonic_spectral_centroid(current),
+            "Signal to signal mean ratio": spectral.signal_to_signal_mean_ratio(spec),
+            "Inrush current ratio": vi.inrush_current_ratio(current),
+            "Positive-negative half cycle ratio": vi.positive_negative_half_cycle_ratio(current),
+            "Max-min ratio": vi.max_min_ratio(current),
+            "Peak-mean ratio": vi.peak_mean_ratio(current),
+            "Max inrush ratio": vi.max_inrush_ratio(current),
+            "Mean variance ratio": vi.mean_variance_ratio(current),
+            "Waveform distortion": vi.waveform_distortion(current),
+            "Waveform approximation": vi.waveform_approximation(current),
+            "Current over time": vi.current_over_time(current),
+            "Admittance over time": vi.admittance_over_time(voltage, current),
+            "Periods to steady state": vi.periods_to_steady_state_current(current),
+            "2nd harmonic": spectral.second_harmonic(harmon),
+            "Transient steady states ratio": vi.transient_steady_states_ratio(current),
+            "Current RMS": vi.current_rms(current)
+            }
+
 
 def feature_boxplot(title, X, y, out=True):
     # Set up grid size
