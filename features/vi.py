@@ -46,12 +46,12 @@ def phase_shift(voltage, current, radian=True, period_length=PERIOD_LENGTH):
     Returns:
         Phase shift as a (n_samples, 1)-dimensional array.
     """
-    ps = [_phase_shift_single(v, i, radian, period_length)
+    ps = [_phase_shift_single(v, i, radian, period_length=period_length)
           for v, i in zip(voltage, current)]
     return np.array(ps).reshape(-1, 1)
 
 
-def active_power(voltage, current, phase_shift=None):
+def active_power(voltage, current, phase_shift=None, period_length=PERIOD_LENGTH):
     """Calculates Active power (P).
 
     If phase shift is None, it is calculated.
@@ -67,12 +67,13 @@ def active_power(voltage, current, phase_shift=None):
         Active power as a (n_samples, 1)-dimensional array.
     """
     if phase_shift is None:
-        phase_shift = phase_shift(voltage, current)
+        phase_shift = phase_shift(voltage, current,
+                                  period_length=period_length)
 
     return rms(voltage) * rms(current) * np.cos(phase_shift)
 
 
-def reactive_power(voltage, current, phase_shift=None):
+def reactive_power(voltage, current, phase_shift=None, period_length=PERIOD_LENGTH):
     """Calculates Reactive power (Q).
 
     If phase shift is None, it is calculated.
@@ -88,7 +89,8 @@ def reactive_power(voltage, current, phase_shift=None):
         Reactive power as a (n_samples, 1)-dimensional array.
     """
     if phase_shift is None:
-        phase_shift = phase_shift(voltage, current)
+        phase_shift = phase_shift(voltage, current,
+                                  period_length=period_length)
 
     return rms(voltage) * rms(current) * np.sin(phase_shift)
 
@@ -253,10 +255,10 @@ def log_attack_time(current, sampling_rate=SAMPLING_RATE):
         LogAttackTime as a (n_samples, 1)-dimensional array.
     """
     starting_times = np.argmax(current, axis=1).reshape(-1, 1)
-    sam_rate = sampling_rate / 1000
+    starting_times = np.where(starting_times > 0, starting_times, 1)
 
     # Make sure input to log is > 0
-    return np.log(np.where(starting_times > 0, starting_times, 1) / sam_rate)
+    return np.log(starting_times / (sampling_rate / 1000))
 
 
 def temporal_centroid(current, period_length=PERIOD_LENGTH,
@@ -413,7 +415,8 @@ def waveform_distortion(current, period_length=PERIOD_LENGTH):
     Returns:
         Waveform distortion as a (n_samples, 1)-dimensional array.
     """
-    current = normalize(average_periods(current, 10), method='max')
+    current = normalize(average_periods(current, 10, period_length),
+                        method='max')
     y = np.sin(np.linspace(0, 2*np.pi, period_length))
     return np.sum(np.abs(current) - np.abs(y), axis=1).reshape(-1, 1)
 
@@ -434,13 +437,14 @@ def waveform_approximation(current, period_length=PERIOD_LENGTH):
     Returns:
         Waveform approximation as a (n_samples, 20)-dimensional array.
     """
-    current = normalize(average_periods(current, n_periods=10), method='max')
+    current = normalize(average_periods(current, 10, period_length),
+                        method='max')
     sampling_points = np.linspace(0, period_length-1, num=20,
                                   endpoint=False, dtype='int')
     return current[:, sampling_points]
 
 
-def current_over_time(current):
+def current_over_time(current, period_length=PERIOD_LENGTH):
     """Calculates the Current over time (COT).
 
     Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
@@ -455,10 +459,11 @@ def current_over_time(current):
     Returns:
         Current over time as a (n_samples, 25)-dimensional array.
     """
-    return helpers.apply_to_periods(current, rms, 25, (0))
+    return helpers.apply_to_periods(current, rms, 25, (0),
+                                    period_length=period_length)
 
 
-def admittance_over_time(voltage, current):
+def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
     """Calculates the Admittance over time (COT).
 
     Let \\(I_\\text{rms}^{(k)}\\) and \\(V_\\text{rms}^{(k)}\\) be the RMS of
@@ -475,11 +480,13 @@ def admittance_over_time(voltage, current):
     Returns:
         Admittance over time as a (n_samples, 25)-dimensional array.
     """
-    return (helpers.apply_to_periods(current, rms, 25, (0)) /
-            helpers.apply_to_periods(voltage, rms, 25, (0)))
+    return (helpers.apply_to_periods(current, rms, 25, (0),
+                                     period_length=period_length) /
+            helpers.apply_to_periods(voltage, rms, 25, (0),
+                                     period_length=period_length))
 
 
-def periods_to_steady_state_current(current):
+def periods_to_steady_state_current(current, period_length=PERIOD_LENGTH):
     """Calculates the Periods to steady state current (PSS).
 
     Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
@@ -495,7 +502,7 @@ def periods_to_steady_state_current(current):
     Returns:
         Periods to steady state current as a (n_samples, 1)-dimensional array.
     """
-    cot = current_over_time(current)
+    cot = current_over_time(current, period_length=period_length)
     l = (1/8 * (np.max(cot, axis=1) - np.median(cot, axis=1)) +
          np.median(cot, axis=1))
     return np.argmax(cot > l.reshape(-1, 1), axis=1).reshape(-1, 1) + 1

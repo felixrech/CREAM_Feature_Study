@@ -9,6 +9,22 @@ SAMPLING_RATE = 6400  # Measurements / second
 PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 
 
+def _get_default_window(current):
+    """Calculates the default window for FFT.
+
+    Window is calculated to be the smallest power of two smaller or equal than
+    the window size of the complete current array. Example: input of 2s
+    interval = 12800 measurements -> window is calculated to be 8192
+
+    Args:
+        current: (n_samples, window_size)-dimensional array of current measurements.
+
+    Returns:
+        Window as an int.
+    """
+    return int(2**np.floor(np.log2(current.shape[1])))
+
+
 def spectrum(current, window=None, sampling_rate=SAMPLING_RATE):
     """Calculates the spectrum (absolute amplitude for positive frequencies)
     for (two-dimensional) arrays of current measurements.
@@ -29,15 +45,15 @@ def spectrum(current, window=None, sampling_rate=SAMPLING_RATE):
     """
     # If window is not specified floor to next power of two
     if window is None:
-        window = int(2**np.floor(np.log2(current.shape[1])))
+        window = _get_default_window(current)
 
     normalized_current = normalize(current[:, :window])
     return np.abs(fft.rfft(normalized_current, axis=1))
 
 
 def spectral_frequencies(window, n=20, limit_to_harmonics=True,
-                         sampling_rate=SAMPLING_RATE,
-                         power_frequency=POWER_FREQUENCY):
+                         power_frequency=POWER_FREQUENCY,
+                         sampling_rate=SAMPLING_RATE):
     """Calculates the spectral frequencies (in Hz) for an application of
     fft.rfft.
 
@@ -51,18 +67,20 @@ def spectral_frequencies(window, n=20, limit_to_harmonics=True,
     """
     freqs = fft.rfftfreq(window) * sampling_rate
     if limit_to_harmonics:
-        return freqs[get_harmonics_indices(freqs, n=n)]
+        return freqs[_get_harmonics_indices(freqs, n=n,
+                                            power_frequency=power_frequency)]
     return freqs
 
 
-def get_harmonics_indices(spectral_frequencies, n=20,
-                          power_freq=POWER_FREQUENCY):
+def _get_harmonics_indices(spectral_frequencies, n=20,
+                           power_freq=POWER_FREQUENCY):
     harmonics = np.arange(power_freq, n * power_freq+1, power_freq)
     freqs = np.where(spectral_frequencies < 0, 0, spectral_frequencies)
     return np.argmin(np.abs(np.dstack([freqs]*n) - harmonics), axis=1).reshape(-1)
 
 
-def harmonics(current, n=20, window=None, power_frequency=POWER_FREQUENCY):
+def harmonics(current, n=20, window=None,
+              power_frequency=POWER_FREQUENCY, sampling_rate=SAMPLING_RATE):
     """Calculates the amplitudes of the first n harmonics frequencies.
 
     Will use window-sized subsets of current measurements. Note that for
@@ -82,10 +100,13 @@ def harmonics(current, n=20, window=None, power_frequency=POWER_FREQUENCY):
     """
     # If window is not specified floor to next power of two
     if window is None:
-        window = int(2**np.floor(np.log2(current.shape[1])))
+        window = _get_default_window(current)
 
-    freqs = spectral_frequencies(window, n, limit_to_harmonics=False)
-    return spectrum(current, window)[:, get_harmonics_indices(freqs, n=n)]
+    freqs = spectral_frequencies(window, limit_to_harmonics=False,
+                                 power_frequency=power_frequency,
+                                 sampling_rate=sampling_rate)
+    idxs = _get_harmonics_indices(freqs, n=n, power_frequency=power_frequency)
+    return spectrum(current, window)[:, idxs]
 
 
 def odd_even_ratio(harmonics_amp):
@@ -186,7 +207,8 @@ def total_harmonic_distortion(harmonics_amp):
     return (rms(harmonics_amp[:, 1:]) / harmonics_amp[:, 0].reshape(-1, 1))
 
 
-def spectral_centroid(spectrum_amp, current):
+def spectral_centroid(spectrum_amp, current, power_frequency=POWER_FREQUENCY,
+                      sampling_rate=SAMPLING_RATE):
     """Calculates the Spectral centroid \\(C_f\\).
 
     Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
@@ -201,14 +223,17 @@ def spectral_centroid(spectrum_amp, current):
     Returns:
         Spectral centroid as a (n_samples, 1)-dimensional array.
     """
-    window = int(2**np.floor(np.log2(current.shape[1])))
-    freqs = spectral_frequencies(window, limit_to_harmonics=False)[1:]
+    window = _get_default_window(current)
+    freqs = spectral_frequencies(window, limit_to_harmonics=False,
+                                 power_frequency=power_frequency,
+                                 sampling_rate=sampling_rate)[1:]
 
     return (np.sum(spectrum_amp[:, 1:] / freqs, axis=1)
             / np.sum(spectrum_amp[:, 1:], axis=1)).reshape(-1, 1)
 
 
-def harmonic_spectral_centroid(current, power_frequency=POWER_FREQUENCY):
+def harmonic_spectral_centroid(current, power_frequency=POWER_FREQUENCY,
+                               sampling_rate=SAMPLING_RATE):
     """Calculates the spectral centroid \\(C_h\\).
 
     \\[C_h = \\frac{\\sum_{i=1}^{50} x_{f_i} \\cdot i}
@@ -220,7 +245,8 @@ def harmonic_spectral_centroid(current, power_frequency=POWER_FREQUENCY):
     Returns:
         Harmonic spectral centroid as a (n_samples, 1)-dimensional array.
     """
-    harmonics_amp = harmonics(current, n=50, power_frequency=power_frequency)
+    harmonics_amp = harmonics(current, n=50, power_frequency=power_frequency,
+                              sampling_rate=sampling_rate)
     return (np.sum(harmonics_amp * np.arange(1, 51), axis=1)
             / np.sum(harmonics_amp, axis=1)).reshape(-1, 1)
 
@@ -251,7 +277,7 @@ def second_harmonic(harmonics_amp):
     method (use the second element of its return value).
 
     Args:
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
 
     Returns:
         Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.

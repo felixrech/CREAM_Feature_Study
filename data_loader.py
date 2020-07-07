@@ -6,7 +6,10 @@ import numpy as np
 
 PATH_TO_DATA = '/var/lib/cream/'
 PATH_TO_CREAM = PATH_TO_DATA + 'CREAM/'
-PERIOD_LENGTH = 6400 // 50       # Each period is 128 sampling points
+
+POWER_FREQUENCY = 50  # Hz
+SAMPLING_RATE = 6400  # Measurements / second
+PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 
 
 ##############################################################################

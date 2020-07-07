@@ -139,9 +139,9 @@ def geo_mean(x):
     return gmean(x, axis=1)
 
 
-def average_periods(X, n_periods):
-    X = X[:, : n_periods * PERIOD_LENGTH]
-    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
+    X = X[:, : n_periods * period_length]
+    X = X.reshape(X.shape[0], n_periods, period_length)
     return np.mean(X, axis=1)
 
 
@@ -152,7 +152,7 @@ def normalize(X, method='max'):
                      "please refer to the docstring for available methods!")
 
 
-def apply_to_periods(X, func, n_periods, args):
-    X = X[:, : n_periods * PERIOD_LENGTH]
-    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
+    X = X[:, : n_periods * period_length]
+    X = X.reshape(X.shape[0], n_periods, period_length)
     return np.apply_along_axis(func, 2, X, args)

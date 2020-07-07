@@ -167,9 +167,9 @@ def geo_mean(x):
     return gmean(x, axis=1)
 
 
-def average_periods(X, n_periods):
-    X = X[:, : n_periods * PERIOD_LENGTH]
-    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
+    X = X[:, : n_periods * period_length]
+    X = X.reshape(X.shape[0], n_periods, period_length)
     return np.mean(X, axis=1)
 
 
@@ -180,9 +180,9 @@ def normalize(X, method=&#39;max&#39;):
                      &#34;please refer to the docstring for available methods!&#34;)
 
 
-def apply_to_periods(X, func, n_periods, args):
-    X = X[:, : n_periods * PERIOD_LENGTH]
-    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
+    X = X[:, : n_periods * period_length]
+    X = X.reshape(X.shape[0], n_periods, period_length)
     return np.apply_along_axis(func, 2, X, args)</code></pre>
 </details>
 </section>
@@ -194,7 +194,7 @@ def apply_to_periods(X, func, n_periods, args):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="CREAM_Feature_Study.features.helpers.apply_to_periods"><code class="name flex">
-<span>def <span class="ident">apply_to_periods</span></span>(<span>X, func, n_periods, args)</span>
+<span>def <span class="ident">apply_to_periods</span></span>(<span>X, func, n_periods, args, period_length=128)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -202,14 +202,14 @@ def apply_to_periods(X, func, n_periods, args):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def apply_to_periods(X, func, n_periods, args):
-    X = X[:, : n_periods * PERIOD_LENGTH]
-    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+<pre><code class="python">def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
+    X = X[:, : n_periods * period_length]
+    X = X.reshape(X.shape[0], n_periods, period_length)
     return np.apply_along_axis(func, 2, X, args)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.average_periods"><code class="name flex">
-<span>def <span class="ident">average_periods</span></span>(<span>X, n_periods)</span>
+<span>def <span class="ident">average_periods</span></span>(<span>X, n_periods, period_length=128)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -217,9 +217,9 @@ def apply_to_periods(X, func, n_periods, args):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def average_periods(X, n_periods):
-    X = X[:, : n_periods * PERIOD_LENGTH]
-    X = X.reshape(X.shape[0], n_periods, PERIOD_LENGTH)
+<pre><code class="python">def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
+    X = X[:, : n_periods * period_length]
+    X = X.reshape(X.shape[0], n_periods, period_length)
     return np.mean(X, axis=1)</code></pre>
 </details>
 </dd>
