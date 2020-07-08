@@ -261,8 +261,8 @@ def log_attack_time(current, sampling_rate=SAMPLING_RATE):
     return np.log(starting_times / (sampling_rate / 1000))
 
 
-def temporal_centroid(current, period_length=PERIOD_LENGTH,
-                      power_frequency=POWER_FREQUENCY):
+def temporal_centroid(current, mains_frequency=POWER_FREQUENCY,
+                      period_length=PERIOD_LENGTH):
     """Calculates the Temporal centroid \\(C_t\\).
 
     Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
@@ -272,17 +272,19 @@ def temporal_centroid(current, period_length=PERIOD_LENGTH,
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
+        mains_frequency (int): Mains frequency, defaults to power frequency.
 
     Returns:
         Temporal centroid as a (n_samples, 1)-dimensional array.
     """
     # Calculate RMS of each period
+    # TODO: Use apply_to_periods?
     ip = rms(current.reshape(current.shape[0], -1, period_length), axis=2)
 
     # Calculate numerator and denominator and put together
     numerator = np.sum(ip * np.arange(1, ip.shape[1]+1), axis=1)
     denominator = np.sum(ip, axis=1)
-    return power_frequency * (numerator / denominator).reshape(-1, 1)
+    return mains_frequency * (numerator / denominator).reshape(-1, 1)
 
 
 def inrush_current_ratio(current, period_length=PERIOD_LENGTH):

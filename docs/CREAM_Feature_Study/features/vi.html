@@ -288,8 +288,8 @@ def log_attack_time(current, sampling_rate=SAMPLING_RATE):
     return np.log(starting_times / (sampling_rate / 1000))
 
 
-def temporal_centroid(current, period_length=PERIOD_LENGTH,
-                      power_frequency=POWER_FREQUENCY):
+def temporal_centroid(current, mains_frequency=POWER_FREQUENCY,
+                      period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Temporal centroid \\(C_t\\).
 
     Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
@@ -299,17 +299,19 @@ def temporal_centroid(current, period_length=PERIOD_LENGTH,
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
+        mains_frequency (int): Mains frequency, defaults to power frequency.
 
     Returns:
         Temporal centroid as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
     # Calculate RMS of each period
+    # TODO: Use apply_to_periods?
     ip = rms(current.reshape(current.shape[0], -1, period_length), axis=2)
 
     # Calculate numerator and denominator and put together
     numerator = np.sum(ip * np.arange(1, ip.shape[1]+1), axis=1)
     denominator = np.sum(ip, axis=1)
-    return power_frequency * (numerator / denominator).reshape(-1, 1)
+    return mains_frequency * (numerator / denominator).reshape(-1, 1)
 
 
 def inrush_current_ratio(current, period_length=PERIOD_LENGTH):
@@ -1425,7 +1427,7 @@ voltage and current arrays.</p>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.vi.temporal_centroid"><code class="name flex">
-<span>def <span class="ident">temporal_centroid</span></span>(<span>current, period_length=128, power_frequency=50)</span>
+<span>def <span class="ident">temporal_centroid</span></span>(<span>current, mains_frequency=50, period_length=128)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Temporal centroid <span><span class="MathJax_Preview">C_t</span><script type="math/tex">C_t</script></span>.</p>
@@ -1438,6 +1440,8 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 <dl>
 <dt><strong><code>current</code></strong></dt>
 <dd>(n_samples, window_size)-dimensional array of current measurements.</dd>
+<dt><strong><code>mains_frequency</code></strong> :&ensp;<code>int</code></dt>
+<dd>Mains frequency, defaults to power frequency.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Temporal centroid as a (n_samples, 1)-dimensional array.</p></div>
@@ -1445,8 +1449,8 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def temporal_centroid(current, period_length=PERIOD_LENGTH,
-                      power_frequency=POWER_FREQUENCY):
+<pre><code class="python">def temporal_centroid(current, mains_frequency=POWER_FREQUENCY,
+                      period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Temporal centroid \\(C_t\\).
 
     Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
@@ -1456,17 +1460,19 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
+        mains_frequency (int): Mains frequency, defaults to power frequency.
 
     Returns:
         Temporal centroid as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
     # Calculate RMS of each period
+    # TODO: Use apply_to_periods?
     ip = rms(current.reshape(current.shape[0], -1, period_length), axis=2)
 
     # Calculate numerator and denominator and put together
     numerator = np.sum(ip * np.arange(1, ip.shape[1]+1), axis=1)
     denominator = np.sum(ip, axis=1)
-    return power_frequency * (numerator / denominator).reshape(-1, 1)</code></pre>
+    return mains_frequency * (numerator / denominator).reshape(-1, 1)</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.vi.transient_steady_states_ratio"><code class="name flex">

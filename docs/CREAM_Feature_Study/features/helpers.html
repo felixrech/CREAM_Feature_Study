@@ -38,7 +38,7 @@ import feature_selection
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.metrics import classification_report, plot_confusion_matrix
+from sklearn.metrics import plot_confusion_matrix
 
 
 PERIOD_LENGTH = 128
@@ -64,13 +64,13 @@ def get_all_features(voltage, current):
             &#34;Phase shift&#34;: ps,
             &#34;VI Trajectory&#34;: np.hstack(vi.vi_trajectory(voltage, current)),
             &#34;Harmonics (first 20)&#34;: harmon,
-            &#34;Harmonics energy distribution&#34;: spectral.harmonics_energy_distribution(harmon),
+            &#34;Harmonics energy distribution&#34;: spectral.harmonics_energy_distribution(harmon, spec),
             &#34;Spectral flatness&#34;: spectral.spectral_flatness(spec),
             &#34;Odd even harmonics ratio&#34;: spectral.odd_even_ratio(harmon),
             &#34;Tristimulus&#34;: spectral.tristiumulus(harmon),
             &#34;Form factor&#34;: vi.form_factor(current),
             &#34;Crest factor&#34;: vi.crest_factor(current),
-            &#34;Total harmonic distortion&#34;: spectral.total_harmonic_distortion(harmon),
+            &#34;Total harmonic distortion&#34;: spectral.total_harmonic_distortion(harmon, spec),
             &#34;Resistance (mean)&#34;: vi.resistance_mean(voltage, current),
             &#34;Resistance (median)&#34;: vi.resistance_median(voltage, current),
             &#34;Admittance (mean)&#34;: vi.admittance_mean(voltage, current),
@@ -116,7 +116,7 @@ def feature_boxplot(title, X, y, out=True):
     plt.show()
 
 
-def feature_evaluation(X, y, output=True):
+def feature_evaluation(X, y, output=True, confusion=False):
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
@@ -138,11 +138,12 @@ def feature_evaluation(X, y, output=True):
     # print(&#34;\nPerformance on training data:\n&#34;)
     # print(classification_report(y, y_pred))
 
-    # Plot confusion matrix (absolute &amp; relative)
-    # plot_confusion_matrix(estimator, X, y)
-    # plt.show()
-    # plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
-    # plt.show()
+    if confusion:
+        # Plot confusion matrix (absolute &amp; relative)
+        plot_confusion_matrix(estimator, X, y)
+        plt.show()
+        plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
+        plt.show()
     return score
 
 
@@ -252,7 +253,7 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.feature_evaluation"><code class="name flex">
-<span>def <span class="ident">feature_evaluation</span></span>(<span>X, y, output=True)</span>
+<span>def <span class="ident">feature_evaluation</span></span>(<span>X, y, output=True, confusion=False)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -260,7 +261,7 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def feature_evaluation(X, y, output=True):
+<pre><code class="python">def feature_evaluation(X, y, output=True, confusion=False):
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
@@ -282,11 +283,12 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
     # print(&#34;\nPerformance on training data:\n&#34;)
     # print(classification_report(y, y_pred))
 
-    # Plot confusion matrix (absolute &amp; relative)
-    # plot_confusion_matrix(estimator, X, y)
-    # plt.show()
-    # plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
-    # plt.show()
+    if confusion:
+        # Plot confusion matrix (absolute &amp; relative)
+        plot_confusion_matrix(estimator, X, y)
+        plt.show()
+        plot_confusion_matrix(estimator, X, y, normalize=&#39;true&#39;)
+        plt.show()
     return score</code></pre>
 </details>
 </dd>
@@ -328,13 +330,13 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
             &#34;Phase shift&#34;: ps,
             &#34;VI Trajectory&#34;: np.hstack(vi.vi_trajectory(voltage, current)),
             &#34;Harmonics (first 20)&#34;: harmon,
-            &#34;Harmonics energy distribution&#34;: spectral.harmonics_energy_distribution(harmon),
+            &#34;Harmonics energy distribution&#34;: spectral.harmonics_energy_distribution(harmon, spec),
             &#34;Spectral flatness&#34;: spectral.spectral_flatness(spec),
             &#34;Odd even harmonics ratio&#34;: spectral.odd_even_ratio(harmon),
             &#34;Tristimulus&#34;: spectral.tristiumulus(harmon),
             &#34;Form factor&#34;: vi.form_factor(current),
             &#34;Crest factor&#34;: vi.crest_factor(current),
-            &#34;Total harmonic distortion&#34;: spectral.total_harmonic_distortion(harmon),
+            &#34;Total harmonic distortion&#34;: spectral.total_harmonic_distortion(harmon, spec),
             &#34;Resistance (mean)&#34;: vi.resistance_mean(voltage, current),
             &#34;Resistance (median)&#34;: vi.resistance_median(voltage, current),
             &#34;Admittance (mean)&#34;: vi.admittance_mean(voltage, current),
