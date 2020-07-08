@@ -73,8 +73,8 @@ def spectral_frequencies(window, n=20, limit_to_harmonics=True,
 
 
 def _get_harmonics_indices(spectral_frequencies, n=20,
-                           power_freq=POWER_FREQUENCY):
-    harmonics = np.arange(power_freq, n * power_freq+1, power_freq)
+                           power_frequency=POWER_FREQUENCY):
+    harmonics = np.arange(1, n+1) * power_frequency
     freqs = np.where(spectral_frequencies < 0, 0, spectral_frequencies)
     return np.argmin(np.abs(np.dstack([freqs]*n) - harmonics), axis=1).reshape(-1)
 
