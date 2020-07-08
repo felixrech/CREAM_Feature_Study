@@ -10,7 +10,7 @@ import feature_selection
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.metrics import classification_report, plot_confusion_matrix
+from sklearn.metrics import plot_confusion_matrix
 
 
 PERIOD_LENGTH = 128
@@ -88,7 +88,7 @@ def feature_boxplot(title, X, y, out=True):
     plt.show()
 
 
-def feature_evaluation(X, y, output=True):
+def feature_evaluation(X, y, output=True, confusion=False):
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
@@ -110,11 +110,12 @@ def feature_evaluation(X, y, output=True):
     # print("\nPerformance on training data:\n")
     # print(classification_report(y, y_pred))
 
-    # Plot confusion matrix (absolute & relative)
-    # plot_confusion_matrix(estimator, X, y)
-    # plt.show()
-    # plot_confusion_matrix(estimator, X, y, normalize='true')
-    # plt.show()
+    if confusion:
+        # Plot confusion matrix (absolute & relative)
+        plot_confusion_matrix(estimator, X, y)
+        plt.show()
+        plot_confusion_matrix(estimator, X, y, normalize='true')
+        plt.show()
     return score
 
 
