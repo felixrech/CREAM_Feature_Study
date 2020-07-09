@@ -272,7 +272,6 @@ def total_harmonic_distortion(harmonics_amp, spectrum_amp):
     Returns:
         Total harmonic distortion as a (n_samples, 1)-dimensional array.
     """
-    # TODO: Check definition
     return (rms(harmonics_amp) / _mains_frequency_amplitude(spectrum_amp))
 
 
@@ -351,4 +350,25 @@ def second_harmonic(harmonics_amp):
     Returns:
         Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
     """
-    return harmonics_amp[:, 1].reshape(-1, 1)
+    return harmonics_amp[:, [1]]
+
+
+def _high_pass_filter(spectrum_amp, filter_frequency=1000):
+    window = _get_window_from_spectrum(spectrum_amp)
+    freqs = spectral_frequencies(window, limit_to_harmonics=False)
+
+    filter = np.where(freqs < filter_frequency, 0, 1)
+
+    return spectrum_amp * filter
+
+
+def high_frequency_spectral_centroid(spectrum_amp, current):
+    return spectral_centroid(_high_pass_filter(spectrum_amp), current)
+
+
+def high_frequency_spectral_flatness(spectrum_amp):
+    return spectral_flatness(_high_pass_filter(spectrum_amp))
+
+
+def high_frequency_spectral_mean(spectrum_amp):
+    return np.mean(_high_pass_filter(spectrum_amp), axis=1).reshape(-1, 1)

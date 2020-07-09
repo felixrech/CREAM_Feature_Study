@@ -299,7 +299,6 @@ def total_harmonic_distortion(harmonics_amp, spectrum_amp):
     Returns:
         Total harmonic distortion as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    # TODO: Check definition
     return (rms(harmonics_amp) / _mains_frequency_amplitude(spectrum_amp))
 
 
@@ -378,7 +377,28 @@ def second_harmonic(harmonics_amp):
     Returns:
         Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    return harmonics_amp[:, 1].reshape(-1, 1)</code></pre>
+    return harmonics_amp[:, [1]]
+
+
+def _high_pass_filter(spectrum_amp, filter_frequency=1000):
+    window = _get_window_from_spectrum(spectrum_amp)
+    freqs = spectral_frequencies(window, limit_to_harmonics=False)
+
+    filter = np.where(freqs &lt; filter_frequency, 0, 1)
+
+    return spectrum_amp * filter
+
+
+def high_frequency_spectral_centroid(spectrum_amp, current):
+    return spectral_centroid(_high_pass_filter(spectrum_amp), current)
+
+
+def high_frequency_spectral_flatness(spectrum_amp):
+    return spectral_flatness(_high_pass_filter(spectrum_amp))
+
+
+def high_frequency_spectral_mean(spectrum_amp):
+    return np.mean(_high_pass_filter(spectrum_amp), axis=1).reshape(-1, 1)</code></pre>
 </details>
 </section>
 <section>
@@ -526,6 +546,45 @@ x_{f_{20}}]</script></span></p>
     return harmonics_amp / _mains_frequency_amplitude(spectrum_amp)</code></pre>
 </details>
 </dd>
+<dt id="CREAM_Feature_Study.features.spectral.high_frequency_spectral_centroid"><code class="name flex">
+<span>def <span class="ident">high_frequency_spectral_centroid</span></span>(<span>spectrum_amp, current)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def high_frequency_spectral_centroid(spectrum_amp, current):
+    return spectral_centroid(_high_pass_filter(spectrum_amp), current)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.spectral.high_frequency_spectral_flatness"><code class="name flex">
+<span>def <span class="ident">high_frequency_spectral_flatness</span></span>(<span>spectrum_amp)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def high_frequency_spectral_flatness(spectrum_amp):
+    return spectral_flatness(_high_pass_filter(spectrum_amp))</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.spectral.high_frequency_spectral_mean"><code class="name flex">
+<span>def <span class="ident">high_frequency_spectral_mean</span></span>(<span>spectrum_amp)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def high_frequency_spectral_mean(spectrum_amp):
+    return np.mean(_high_pass_filter(spectrum_amp), axis=1).reshape(-1, 1)</code></pre>
+</details>
+</dd>
 <dt id="CREAM_Feature_Study.features.spectral.odd_even_ratio"><code class="name flex">
 <span>def <span class="ident">odd_even_ratio</span></span>(<span>harmonics_amp)</span>
 </code></dt>
@@ -597,7 +656,7 @@ method (use the second element of its return value).</p>
     Returns:
         Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    return harmonics_amp[:, 1].reshape(-1, 1)</code></pre>
+    return harmonics_amp[:, [1]]</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.spectral.signal_to_signal_mean_ratio"><code class="name flex">
@@ -859,7 +918,6 @@ Then:</p>
     Returns:
         Total harmonic distortion as a (n_samples, 1)-dimensional array.
     &#34;&#34;&#34;
-    # TODO: Check definition
     return (rms(harmonics_amp) / _mains_frequency_amplitude(spectrum_amp))</code></pre>
 </details>
 </dd>
@@ -930,6 +988,9 @@ T_2 = \frac{x_{f_2} + x_{f_3} + x_{f_4}}{\sum_{i=1}^{20} x_{f_i}}</script></span
 <li><code><a title="CREAM_Feature_Study.features.spectral.harmonic_spectral_centroid" href="#CREAM_Feature_Study.features.spectral.harmonic_spectral_centroid">harmonic_spectral_centroid</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.harmonics" href="#CREAM_Feature_Study.features.spectral.harmonics">harmonics</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.harmonics_energy_distribution" href="#CREAM_Feature_Study.features.spectral.harmonics_energy_distribution">harmonics_energy_distribution</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.spectral.high_frequency_spectral_centroid" href="#CREAM_Feature_Study.features.spectral.high_frequency_spectral_centroid">high_frequency_spectral_centroid</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.spectral.high_frequency_spectral_flatness" href="#CREAM_Feature_Study.features.spectral.high_frequency_spectral_flatness">high_frequency_spectral_flatness</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.spectral.high_frequency_spectral_mean" href="#CREAM_Feature_Study.features.spectral.high_frequency_spectral_mean">high_frequency_spectral_mean</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.odd_even_ratio" href="#CREAM_Feature_Study.features.spectral.odd_even_ratio">odd_even_ratio</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.second_harmonic" href="#CREAM_Feature_Study.features.spectral.second_harmonic">second_harmonic</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.spectral.signal_to_signal_mean_ratio" href="#CREAM_Feature_Study.features.spectral.signal_to_signal_mean_ratio">signal_to_signal_mean_ratio</a></code></li>
