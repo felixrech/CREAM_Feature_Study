@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy import fft
 from scipy import signal
 
 from features import helpers
@@ -35,20 +36,27 @@ def _phase_shift_single(voltage, current, radian=True,
     return phase_shift
 
 
-def phase_shift(voltage, current, radian=True, period_length=PERIOD_LENGTH):
-    """Calculates Phase shift.
+def phase_shift(voltage, current, mains_frequency=POWER_FREQUENCY,
+                power_frequency=POWER_FREQUENCY, sampling_rate=SAMPLING_RATE):
+    """Calculates Phase shift (unit: radian).
 
     Args:
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
         current: (n_samples, window_size)-dimensional array of current measurements.
-        radian (bool): Whether to return as radian (True) or absolute value.
 
     Returns:
         Phase shift as a (n_samples, 1)-dimensional array.
     """
-    ps = [_phase_shift_single(v, i, radian, period_length=period_length)
-          for v, i in zip(voltage, current)]
-    return np.array(ps).reshape(-1, 1)
+    # Avoid circular imports
+    from features.spectral import _get_default_window
+    n = _get_default_window(current)
+    freqs = fft.rfftfreq(n) * sampling_rate
+    # Get only the f0 bin of the spectrum
+    idx = np.argmin(np.abs(freqs - mains_frequency))
+    spec_current = fft.rfft(current, n, axis=1)[:, idx]
+    spec_voltage = fft.rfft(voltage, n, axis=1)[:, idx]
+    # Phase shift = phase angle (f0 bin) current - phase angle voltage
+    return (np.angle(spec_current) - np.angle(spec_voltage)).reshape(-1, 1)
 
 
 def active_power(voltage, current, phase_shift=None, period_length=PERIOD_LENGTH):
