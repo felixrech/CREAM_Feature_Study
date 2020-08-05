@@ -98,7 +98,7 @@ def forward_selection(features, y, feature_eval, max_features=None,
     return df.iloc[0]
 
 
-def get_evaluation(model):
+def get_evaluation(model, custom_params):
     if model == 'knn':
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {'n_neighbors': np.arange(1, 20)}
@@ -118,12 +118,13 @@ def get_evaluation(model):
     else:
         raise ValueError(f"Classifier of type {model} not implemented")
 
-    return partial(evaluate_feature, metric='f1_macro',
-                   classifier=classifier, param_grid=param_grid)
+    return partial(evaluate_feature, metric='f1_macro', classifier=classifier,
+                   param_grid={**param_grid, **custom_params})
 
 
-def simple_forward_selection(n_features, y, model, max=None, one_dim=False):
-    evaluation = get_evaluation(model)
+def simple_forward_selection(n_features, y, model, max=None, one_dim=False,
+                             custom_params={}):
+    evaluation = get_evaluation(model, custom_params)
     return forward_selection(n_features, y, evaluation, max, one_dim)
 
 

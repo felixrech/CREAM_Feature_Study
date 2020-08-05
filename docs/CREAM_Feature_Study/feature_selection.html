@@ -125,7 +125,7 @@ def forward_selection(features, y, feature_eval, max_features=None,
     return df.iloc[0]
 
 
-def get_evaluation(model):
+def get_evaluation(model, custom_params):
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
@@ -145,12 +145,13 @@ def get_evaluation(model):
     else:
         raise ValueError(f&#34;Classifier of type {model} not implemented&#34;)
 
-    return partial(evaluate_feature, metric=&#39;f1_macro&#39;,
-                   classifier=classifier, param_grid=param_grid)
+    return partial(evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
+                   param_grid={**param_grid, **custom_params})
 
 
-def simple_forward_selection(n_features, y, model, max=None, one_dim=False):
-    evaluation = get_evaluation(model)
+def simple_forward_selection(n_features, y, model, max=None, one_dim=False,
+                             custom_params={}):
+    evaluation = get_evaluation(model, custom_params)
     return forward_selection(n_features, y, evaluation, max, one_dim)
 
 
@@ -307,7 +308,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.feature_selection.get_evaluation"><code class="name flex">
-<span>def <span class="ident">get_evaluation</span></span>(<span>model)</span>
+<span>def <span class="ident">get_evaluation</span></span>(<span>model, custom_params)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -315,7 +316,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_evaluation(model):
+<pre><code class="python">def get_evaluation(model, custom_params):
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
@@ -335,8 +336,8 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
     else:
         raise ValueError(f&#34;Classifier of type {model} not implemented&#34;)
 
-    return partial(evaluate_feature, metric=&#39;f1_macro&#39;,
-                   classifier=classifier, param_grid=param_grid)</code></pre>
+    return partial(evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
+                   param_grid={**param_grid, **custom_params})</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.feature_selection.normalize_features"><code class="name flex">
@@ -396,7 +397,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.feature_selection.simple_forward_selection"><code class="name flex">
-<span>def <span class="ident">simple_forward_selection</span></span>(<span>n_features, y, model, max=None, one_dim=False)</span>
+<span>def <span class="ident">simple_forward_selection</span></span>(<span>n_features, y, model, max=None, one_dim=False, custom_params={})</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -404,8 +405,9 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def simple_forward_selection(n_features, y, model, max=None, one_dim=False):
-    evaluation = get_evaluation(model)
+<pre><code class="python">def simple_forward_selection(n_features, y, model, max=None, one_dim=False,
+                             custom_params={}):
+    evaluation = get_evaluation(model, custom_params)
     return forward_selection(n_features, y, evaluation, max, one_dim)</code></pre>
 </details>
 </dd>
