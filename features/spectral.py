@@ -208,6 +208,7 @@ def spectral_flatness(spectrum_amp):
     Returns:
         Spectral flatness as a (n_samples, 1)-dimensional array.
     """
+    spectrum_amp = np.where(spectrum_amp == 0, 0.00001, spectrum_amp)
     return (geo_mean(spectrum_amp) / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)
 
 
@@ -353,22 +354,112 @@ def second_harmonic(harmonics_amp):
     return harmonics_amp[:, [1]]
 
 
-def _high_pass_filter(spectrum_amp, filter_frequency=1000):
+def high_pass_filter(spectrum_amp, filter_type='zero', filter_frequency=1000):
+    """Applies a high pass filter of chosen type to the spectrum.
+
+    The high pass filter passes all spectral amplitudes with a frequency
+    higher than the specified cutoff frequency. Amplitudes with a lower
+    frequency get attenuated to a degree that depends on the filter type
+    chosen. Three filter types have been implemented:
+
+    - Zero: Low-frequency amplitudes are set to zero.
+    - Linear: Amplitude with frequency \\(f\\) are scaled by
+    \\(\\frac{1}{f} / \\text{filter_frequency}\\)
+    - Quadratic: Amplitude with frequency \\(f\\) are scaled by
+    \\((\\frac{1}{f} / \\text{filter_frequency})^2\\).
+
+    Args:
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
+        filter_type (string): Type of filter to apply.
+        filter_frequency (int): Cutoff frequency (in Hz) to use.
+
+    Returns:
+        numpy.ndarray: Filtered spectrum as a (n_samples, window)-dimensional array.
+    """
     window = _get_window_from_spectrum(spectrum_amp)
     freqs = spectral_frequencies(window, limit_to_harmonics=False)
 
-    filter = np.where(freqs < filter_frequency, 0, 1)
+    if filter_type == 'zero':
+        filter = np.where(freqs < filter_frequency, 0, 1)
+    elif filter_type == 'linear':
+        filter = np.where(freqs < filter_frequency,
+                          freqs / filter_frequency, 1)
+    elif filter_type == 'quadratic':
+        filter = np.where(freqs < filter_frequency,
+                          np.square(freqs / filter_frequency), 1)
+    elif filter_type == 'none':
+        filter = np.ones_like(freqs)
+    else:
+        raise ValueError(f"High pass filter of type '{filter_type}'"
+                         "not implemented...")
 
     return spectrum_amp * filter
 
 
-def high_frequency_spectral_centroid(spectrum_amp, current):
-    return spectral_centroid(_high_pass_filter(spectrum_amp), current)
+def high_frequency_spectral_centroid(spectrum_amp, current,
+                                     filter_type='zero', filter_frequency=1000,
+                                     power_frequency=POWER_FREQUENCY,
+                                     sampling_rate=SAMPLING_RATE):
+    """Calculates the High frequency spectral centroid (HFSPC).
+
+    The high frequency spectral centroid is the normal spectral centroid but
+    applied to a high pass filtered spectrum. For high pass filter type
+    options see the high_pass_filter function.
+
+    Args:
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
+        filter_type (string): Type of filter to apply.
+        filter_frequency (int): Cutoff frequency (in Hz) to use.
+
+    Returns:
+        numpy.ndarray: High frequency spectral centroid as a (n_samples, 1)-dimensional array.
+    """
+    return spectral_centroid(
+        high_pass_filter(spectrum_amp, filter_type, filter_frequency),
+        current, power_frequency=power_frequency, sampling_rate=sampling_rate
+    )
 
 
-def high_frequency_spectral_flatness(spectrum_amp):
-    return spectral_flatness(_high_pass_filter(spectrum_amp))
+def high_frequency_spectral_flatness(spectrum_amp, filter_type='zero',
+                                     filter_frequency=1000):
+    """Calculates the High frequency spectral flatness (HFSPF).
+
+    The high frequency spectral flatness is the normal spectral flatness but
+    applied to a high pass filtered spectrum. For high pass filter type
+    options see the high_pass_filter function.
+
+    Args:
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
+        filter_type (string): Type of filter to apply.
+        filter_frequency (int): Cutoff frequency (in Hz) to use.
+
+    Returns:
+        numpy.ndarray: High frequency spectral centroid as a (n_samples, 1)-dimensional array.
+    """
+    filtered = high_pass_filter(spectrum_amp, filter_type, filter_frequency)
+    return spectral_flatness(filtered)
 
 
-def high_frequency_spectral_mean(spectrum_amp):
-    return np.mean(_high_pass_filter(spectrum_amp), axis=1).reshape(-1, 1)
+def high_frequency_spectral_mean(spectrum_amp, filter_type='zero',
+                                 filter_frequency=1000):
+    """Calculates the High frequency spectral mean (HFSPM).
+
+    The high frequency spectral mean is the mean of spectral amplitudes after
+    application of a high pass filter: Let \\(x_{f}\\) be the real-part
+    amplitude of the bin with frequency \\(f\\) in the current's spectrum and
+    \\(N\\) the number of bins.
+
+    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f\\]
+
+    For high pass filter type options see the high_pass_filter function.
+
+    Args:
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
+        filter_type (string): Type of filter to apply.
+        filter_frequency (int): Cutoff frequency (in Hz) to use.
+
+    Returns:
+        numpy.ndarray: High frequency spectral mean as a (n_samples, 1)-dimensional array.
+    """
+    filtered = high_pass_filter(spectrum_amp, filter_type, filter_frequency)
+    return np.mean(filtered, axis=1).reshape(-1, 1)
