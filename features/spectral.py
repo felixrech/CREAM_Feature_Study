@@ -227,7 +227,7 @@ def harmonics_energy_distribution(harmonics_amp, spectrum_amp):
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
-        Harmonics energy distribution as a (n_samples, 19)-dimensional array.
+        Harmonics energy distribution as a (n_samples, 20)-dimensional array.
     """
     return harmonics_amp / _mains_frequency_amplitude(spectrum_amp)
 
