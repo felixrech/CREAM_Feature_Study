@@ -372,8 +372,8 @@ def positive_negative_half_cycle_ratio(current, period_length=PERIOD_LENGTH):
 def max_min_ratio(current):
     &#34;&#34;&#34;Calculates the Max-min ratio (MAMI).
 
-    \\[MAMI = \\frac{\\min\\{|\\max(I_\\text{ROI})|, |\\min(I_\\text{ROI})|\\}}
-                    {\\max\\{|\\max(I_\\text{ROI})|, |\\min(I_\\text{ROI})|\\}}\\]
+    \\[MAMI = \\frac{\\min\\{|\\max(I)|, |\\min(I)|\\}}
+                    {\\max\\{|\\max(I)|, |\\min(I)|\\}}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -389,7 +389,7 @@ def max_min_ratio(current):
 def peak_mean_ratio(current):
     &#34;&#34;&#34;Calculates the Peak-mean ratio (PMR).
 
-    \\[MAMI = \\frac{\\max(|I_\\text{ROI}|}{\\text{mean}(|I_\\text{ROI}|}\\]
+    \\[PMR = \\frac{\\max(|I|)}{\\text{mean}(|I|)}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -423,8 +423,8 @@ def max_inrush_ratio(current, period_length=PERIOD_LENGTH):
 def mean_variance_ratio(current):
     &#34;&#34;&#34;Calculates the Mean variance ratio (MVR).
 
-    \\[MVR = \\frac{\\text{mean}(|I_\\text{ROI}|)}
-                   {\\text{var}(|I_\\text{ROI}|)}\\]
+    \\[MVR = \\frac{\\text{mean}(|I|)}
+                   {\\text{var}(|I|)}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -439,12 +439,12 @@ def mean_variance_ratio(current):
 def waveform_distortion(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Waveform distortion WFD.
 
-    Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
+    Let \\(I_{W_\\text{avg}}\\) be the current measurements (aligned with the
     rising zero crossing) averaged over the first ten periods and normalized
     (with their maximum value). Let \\(Y_{\\sin} = \\left(\\sin(\\frac{i}{128}
     \\times 2 \\pi)\\right)_{i \\in (0, 1, ..., 127)}\\). Then:
 
-    \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_\\text{avg}^{10}| \\right)\\]
+    \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_{W_\\text{avg}}| \\right)\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -461,12 +461,12 @@ def waveform_distortion(current, period_length=PERIOD_LENGTH):
 def waveform_approximation(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Waveform approximation (WFA).
 
-    Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
+    Let \\(I_{W_\\text{avg}}\\) be the current measurements (aligned with the
     rising zero crossing) averaged over the first ten periods and normalized
     (with their maximum value). Let \\(S = (0, 6, 12, 19, ..., 114, 120)\\) be
     a list of 20 equidistant sampling points over one period. Then:
 
-    \\[WFA = \\left( I_{\\text{avg}, s}^{10} \\right)_{s \\in S}\\]
+    \\[WFA = \\left( I_{W_\\text{avg}, s} \\right)_{s \\in S}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -484,11 +484,10 @@ def waveform_approximation(current, period_length=PERIOD_LENGTH):
 def current_over_time(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Current over time (COT).
 
-    Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
-    the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
 
-    \\[COT = \\left( I_\\text{rms}^{(1)}, I_\\text{rms}^{(2)}, ...,
-    I_\\text{rms}^{(25)} \\right)\\]
+    \\[COT = \\left( I_{P(1)}, I_{P(2)}, ..., I_{P(25)} \\right)\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -501,14 +500,14 @@ def current_over_time(current, period_length=PERIOD_LENGTH):
 
 
 def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
-    &#34;&#34;&#34;Calculates the Admittance over time (COT).
+    &#34;&#34;&#34;Calculates the Admittance over time (AOT).
 
-    Let \\(I_\\text{rms}^{(k)}\\) and \\(V_\\text{rms}^{(k)}\\) be the RMS of
-    the current and voltage measurements of the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\). Further, let
+    \\(V_{W(k)}\\) and \\(V_{P(k)}\\) be analogous for the voltage.
 
-    \\[AOT = \\left( \\frac{I_\\text{rms}^{(1)}}{V_\\text{rms}^{(1)}},
-    \\frac{I_\\text{rms}^{(2)}}{V_\\text{rms}^{(2)}}, ...,
-    \\frac{I_\\text{rms}^{(25)}}{V_\\text{rms}^{(25)}} \\right)\\]
+    \\[AOT = \\left( \\frac{I_{P(1)}}{V_{P(1)}}, \\frac{I_{P(2)}}{V_{P(2)}},
+    ..., \\frac{I_{P(25)}}{V_{P(25)}} \\right)\\]
 
     Args:
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
@@ -526,12 +525,11 @@ def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
 def periods_to_steady_state_current(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Periods to steady state current (PSS).
 
-    Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
-    the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
 
-    \\[L = \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT)) +
-    \\text{median}(COT)\\]
-    \\[PSS = \\underset{k}{\\arg \\min} \\thinspace I_\\text{rms}^{(k)} &gt; L\\]
+    \\[PSS = \\underset{k}{\\arg \\min} \\thinspace I_{P(k)} &lt; \\text{median}
+    (COT) + \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT))\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -732,14 +730,13 @@ voltage and current arrays.</p>
 <span>def <span class="ident">admittance_over_time</span></span>(<span>voltage, current, period_length=128)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculates the Admittance over time (COT).</p>
-<p>Let <span><span class="MathJax_Preview">I_\text{rms}^{(k)}</span><script type="math/tex">I_\text{rms}^{(k)}</script></span> and <span><span class="MathJax_Preview">V_\text{rms}^{(k)}</span><script type="math/tex">V_\text{rms}^{(k)}</script></span> be the RMS of
-the current and voltage measurements of the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span>th period. Then:</p>
-<p><span><span class="MathJax_Preview">AOT = \left( \frac{I_\text{rms}^{(1)}}{V_\text{rms}^{(1)}},
-\frac{I_\text{rms}^{(2)}}{V_\text{rms}^{(2)}}, ...,
-\frac{I_\text{rms}^{(25)}}{V_\text{rms}^{(25)}} \right)</span><script type="math/tex; mode=display">AOT = \left( \frac{I_\text{rms}^{(1)}}{V_\text{rms}^{(1)}},
-\frac{I_\text{rms}^{(2)}}{V_\text{rms}^{(2)}}, ...,
-\frac{I_\text{rms}^{(25)}}{V_\text{rms}^{(25)}} \right)</script></span></p>
+<div class="desc"><p>Calculates the Admittance over time (AOT).</p>
+<p>Let <span><span class="MathJax_Preview">I_{W(k)}</span><script type="math/tex">I_{W(k)}</script></span> denote the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span>th of <span><span class="MathJax_Preview">N</span><script type="math/tex">N</script></span> periods of current
+measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{W(k)})</span><script type="math/tex">I_{P(k)} = \text{rms}(I_{W(k)})</script></span>. Further, let
+<span><span class="MathJax_Preview">V_{W(k)}</span><script type="math/tex">V_{W(k)}</script></span> and <span><span class="MathJax_Preview">V_{P(k)}</span><script type="math/tex">V_{P(k)}</script></span> be analogous for the voltage.</p>
+<p><span><span class="MathJax_Preview">AOT = \left( \frac{I_{P(1)}}{V_{P(1)}}, \frac{I_{P(2)}}{V_{P(2)}},
+..., \frac{I_{P(25)}}{V_{P(25)}} \right)</span><script type="math/tex; mode=display">AOT = \left( \frac{I_{P(1)}}{V_{P(1)}}, \frac{I_{P(2)}}{V_{P(2)}},
+..., \frac{I_{P(25)}}{V_{P(25)}} \right)</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>voltage</code></strong></dt>
@@ -754,14 +751,14 @@ the current and voltage measurements of the <span><span class="MathJax_Preview">
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
-    &#34;&#34;&#34;Calculates the Admittance over time (COT).
+    &#34;&#34;&#34;Calculates the Admittance over time (AOT).
 
-    Let \\(I_\\text{rms}^{(k)}\\) and \\(V_\\text{rms}^{(k)}\\) be the RMS of
-    the current and voltage measurements of the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\). Further, let
+    \\(V_{W(k)}\\) and \\(V_{P(k)}\\) be analogous for the voltage.
 
-    \\[AOT = \\left( \\frac{I_\\text{rms}^{(1)}}{V_\\text{rms}^{(1)}},
-    \\frac{I_\\text{rms}^{(2)}}{V_\\text{rms}^{(2)}}, ...,
-    \\frac{I_\\text{rms}^{(25)}}{V_\\text{rms}^{(25)}} \\right)\\]
+    \\[AOT = \\left( \\frac{I_{P(1)}}{V_{P(1)}}, \\frac{I_{P(2)}}{V_{P(2)}},
+    ..., \\frac{I_{P(25)}}{V_{P(25)}} \\right)\\]
 
     Args:
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
@@ -846,11 +843,9 @@ the current and voltage measurements of the <span><span class="MathJax_Preview">
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Current over time (COT).</p>
-<p>Let <span><span class="MathJax_Preview">I_\text{rms}^{(k)}</span><script type="math/tex">I_\text{rms}^{(k)}</script></span> be the RMS of the current measurements of
-the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span>th period. Then:</p>
-<p><span><span class="MathJax_Preview">COT = \left( I_\text{rms}^{(1)}, I_\text{rms}^{(2)}, ...,
-I_\text{rms}^{(25)} \right)</span><script type="math/tex; mode=display">COT = \left( I_\text{rms}^{(1)}, I_\text{rms}^{(2)}, ...,
-I_\text{rms}^{(25)} \right)</script></span></p>
+<p>Let <span><span class="MathJax_Preview">I_{W(k)}</span><script type="math/tex">I_{W(k)}</script></span> denote the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span>th of <span><span class="MathJax_Preview">N</span><script type="math/tex">N</script></span> periods of current
+measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{W(k)})</span><script type="math/tex">I_{P(k)} = \text{rms}(I_{W(k)})</script></span> and</p>
+<p><span><span class="MathJax_Preview">COT = \left( I_{P(1)}, I_{P(2)}, ..., I_{P(25)} \right)</span><script type="math/tex; mode=display">COT = \left( I_{P(1)}, I_{P(2)}, ..., I_{P(25)} \right)</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -865,11 +860,10 @@ I_\text{rms}^{(25)} \right)</script></span></p>
 <pre><code class="python">def current_over_time(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Current over time (COT).
 
-    Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
-    the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
 
-    \\[COT = \\left( I_\\text{rms}^{(1)}, I_\\text{rms}^{(2)}, ...,
-    I_\\text{rms}^{(25)} \\right)\\]
+    \\[COT = \\left( I_{P(1)}, I_{P(2)}, ..., I_{P(25)} \\right)\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -1087,9 +1081,9 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Max-min ratio (MAMI).</p>
-<p><span><span class="MathJax_Preview">MAMI = \frac{\min\{|\max(I_\text{ROI})|, |\min(I_\text{ROI})|\}}
-{\max\{|\max(I_\text{ROI})|, |\min(I_\text{ROI})|\}}</span><script type="math/tex; mode=display">MAMI = \frac{\min\{|\max(I_\text{ROI})|, |\min(I_\text{ROI})|\}}
-{\max\{|\max(I_\text{ROI})|, |\min(I_\text{ROI})|\}}</script></span></p>
+<p><span><span class="MathJax_Preview">MAMI = \frac{\min\{|\max(I)|, |\min(I)|\}}
+{\max\{|\max(I)|, |\min(I)|\}}</span><script type="math/tex; mode=display">MAMI = \frac{\min\{|\max(I)|, |\min(I)|\}}
+{\max\{|\max(I)|, |\min(I)|\}}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -1104,8 +1098,8 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 <pre><code class="python">def max_min_ratio(current):
     &#34;&#34;&#34;Calculates the Max-min ratio (MAMI).
 
-    \\[MAMI = \\frac{\\min\\{|\\max(I_\\text{ROI})|, |\\min(I_\\text{ROI})|\\}}
-                    {\\max\\{|\\max(I_\\text{ROI})|, |\\min(I_\\text{ROI})|\\}}\\]
+    \\[MAMI = \\frac{\\min\\{|\\max(I)|, |\\min(I)|\\}}
+                    {\\max\\{|\\max(I)|, |\\min(I)|\\}}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -1123,9 +1117,9 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Mean variance ratio (MVR).</p>
-<p><span><span class="MathJax_Preview">MVR = \frac{\text{mean}(|I_\text{ROI}|)}
-{\text{var}(|I_\text{ROI}|)}</span><script type="math/tex; mode=display">MVR = \frac{\text{mean}(|I_\text{ROI}|)}
-{\text{var}(|I_\text{ROI}|)}</script></span></p>
+<p><span><span class="MathJax_Preview">MVR = \frac{\text{mean}(|I|)}
+{\text{var}(|I|)}</span><script type="math/tex; mode=display">MVR = \frac{\text{mean}(|I|)}
+{\text{var}(|I|)}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -1140,8 +1134,8 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 <pre><code class="python">def mean_variance_ratio(current):
     &#34;&#34;&#34;Calculates the Mean variance ratio (MVR).
 
-    \\[MVR = \\frac{\\text{mean}(|I_\\text{ROI}|)}
-                   {\\text{var}(|I_\\text{ROI}|)}\\]
+    \\[MVR = \\frac{\\text{mean}(|I|)}
+                   {\\text{var}(|I|)}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -1158,7 +1152,7 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Peak-mean ratio (PMR).</p>
-<p><span><span class="MathJax_Preview">MAMI = \frac{\max(|I_\text{ROI}|}{\text{mean}(|I_\text{ROI}|}</span><script type="math/tex; mode=display">MAMI = \frac{\max(|I_\text{ROI}|}{\text{mean}(|I_\text{ROI}|}</script></span></p>
+<p><span><span class="MathJax_Preview">PMR = \frac{\max(|I|)}{\text{mean}(|I|)}</span><script type="math/tex; mode=display">PMR = \frac{\max(|I|)}{\text{mean}(|I|)}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -1173,7 +1167,7 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 <pre><code class="python">def peak_mean_ratio(current):
     &#34;&#34;&#34;Calculates the Peak-mean ratio (PMR).
 
-    \\[MAMI = \\frac{\\max(|I_\\text{ROI}|}{\\text{mean}(|I_\\text{ROI}|}\\]
+    \\[PMR = \\frac{\\max(|I|)}{\\text{mean}(|I|)}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -1190,12 +1184,11 @@ measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Periods to steady state current (PSS).</p>
-<p>Let <span><span class="MathJax_Preview">I_\text{rms}^{(k)}</span><script type="math/tex">I_\text{rms}^{(k)}</script></span> be the RMS of the current measurements of
-the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span>th period. Then:</p>
-<p><span><span class="MathJax_Preview">L = \frac{1}{8} \cdot (\max(COT) - \text{median}(COT)) +
-\text{median}(COT)</span><script type="math/tex; mode=display">L = \frac{1}{8} \cdot (\max(COT) - \text{median}(COT)) +
-\text{median}(COT)</script></span>
-<span><span class="MathJax_Preview">PSS = \underset{k}{\arg \min} \thinspace I_\text{rms}^{(k)} &gt; L</span><script type="math/tex; mode=display">PSS = \underset{k}{\arg \min} \thinspace I_\text{rms}^{(k)} > L</script></span></p>
+<p>Let <span><span class="MathJax_Preview">I_{W(k)}</span><script type="math/tex">I_{W(k)}</script></span> denote the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span>th of <span><span class="MathJax_Preview">N</span><script type="math/tex">N</script></span> periods of current
+measurements. Then <span><span class="MathJax_Preview">I_{P(k)} = \text{rms}(I_{W(k)})</span><script type="math/tex">I_{P(k)} = \text{rms}(I_{W(k)})</script></span> and</p>
+<p><span><span class="MathJax_Preview">PSS = \underset{k}{\arg \min} \thinspace I_{P(k)} &lt; \text{median}
+(COT) + \frac{1}{8} \cdot (\max(COT) - \text{median}(COT))</span><script type="math/tex; mode=display">PSS = \underset{k}{\arg \min} \thinspace I_{P(k)} < \text{median}
+(COT) + \frac{1}{8} \cdot (\max(COT) - \text{median}(COT))</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -1210,12 +1203,11 @@ the <span><span class="MathJax_Preview">k</span><script type="math/tex">k</scrip
 <pre><code class="python">def periods_to_steady_state_current(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Periods to steady state current (PSS).
 
-    Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
-    the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
 
-    \\[L = \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT)) +
-    \\text{median}(COT)\\]
-    \\[PSS = \\underset{k}{\\arg \\min} \\thinspace I_\\text{rms}^{(k)} &gt; L\\]
+    \\[PSS = \\underset{k}{\\arg \\min} \\thinspace I_{P(k)} &lt; \\text{median}
+    (COT) + \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT))\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -1609,11 +1601,11 @@ maximum.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Waveform approximation (WFA).</p>
-<p>Let <span><span class="MathJax_Preview">I_\text{avg}^{10}</span><script type="math/tex">I_\text{avg}^{10}</script></span> be the current measurements (aligned with the
+<p>Let <span><span class="MathJax_Preview">I_{W_\text{avg}}</span><script type="math/tex">I_{W_\text{avg}}</script></span> be the current measurements (aligned with the
 rising zero crossing) averaged over the first ten periods and normalized
 (with their maximum value). Let <span><span class="MathJax_Preview">S = (0, 6, 12, 19, ..., 114, 120)</span><script type="math/tex">S = (0, 6, 12, 19, ..., 114, 120)</script></span> be
 a list of 20 equidistant sampling points over one period. Then:</p>
-<p><span><span class="MathJax_Preview">WFA = \left( I_{\text{avg}, s}^{10} \right)_{s \in S}</span><script type="math/tex; mode=display">WFA = \left( I_{\text{avg}, s}^{10} \right)_{s \in S}</script></span></p>
+<p><span><span class="MathJax_Preview">WFA = \left( I_{W_\text{avg}, s} \right)_{s \in S}</span><script type="math/tex; mode=display">WFA = \left( I_{W_\text{avg}, s} \right)_{s \in S}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -1628,12 +1620,12 @@ a list of 20 equidistant sampling points over one period. Then:</p>
 <pre><code class="python">def waveform_approximation(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Waveform approximation (WFA).
 
-    Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
+    Let \\(I_{W_\\text{avg}}\\) be the current measurements (aligned with the
     rising zero crossing) averaged over the first ten periods and normalized
     (with their maximum value). Let \\(S = (0, 6, 12, 19, ..., 114, 120)\\) be
     a list of 20 equidistant sampling points over one period. Then:
 
-    \\[WFA = \\left( I_{\\text{avg}, s}^{10} \\right)_{s \\in S}\\]
+    \\[WFA = \\left( I_{W_\\text{avg}, s} \\right)_{s \\in S}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -1653,12 +1645,12 @@ a list of 20 equidistant sampling points over one period. Then:</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Waveform distortion WFD.</p>
-<p>Let <span><span class="MathJax_Preview">I_\text{avg}^{10}</span><script type="math/tex">I_\text{avg}^{10}</script></span> be the current measurements (aligned with the
+<p>Let <span><span class="MathJax_Preview">I_{W_\text{avg}}</span><script type="math/tex">I_{W_\text{avg}}</script></span> be the current measurements (aligned with the
 rising zero crossing) averaged over the first ten periods and normalized
 (with their maximum value). Let <span><span class="MathJax_Preview">Y_{\sin} = \left(\sin(\frac{i}{128}
 \times 2 \pi)\right)_{i \in (0, 1, ..., 127)}</span><script type="math/tex">Y_{\sin} = \left(\sin(\frac{i}{128}
 \times 2 \pi)\right)_{i \in (0, 1, ..., 127)}</script></span>. Then:</p>
-<p><span><span class="MathJax_Preview">WFD = \sum \left( |Y_{\sin}| - |I_\text{avg}^{10}| \right)</span><script type="math/tex; mode=display">WFD = \sum \left( |Y_{\sin}| - |I_\text{avg}^{10}| \right)</script></span></p>
+<p><span><span class="MathJax_Preview">WFD = \sum \left( |Y_{\sin}| - |I_{W_\text{avg}}| \right)</span><script type="math/tex; mode=display">WFD = \sum \left( |Y_{\sin}| - |I_{W_\text{avg}}| \right)</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>current</code></strong></dt>
@@ -1673,12 +1665,12 @@ rising zero crossing) averaged over the first ten periods and normalized
 <pre><code class="python">def waveform_distortion(current, period_length=PERIOD_LENGTH):
     &#34;&#34;&#34;Calculates the Waveform distortion WFD.
 
-    Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
+    Let \\(I_{W_\\text{avg}}\\) be the current measurements (aligned with the
     rising zero crossing) averaged over the first ten periods and normalized
     (with their maximum value). Let \\(Y_{\\sin} = \\left(\\sin(\\frac{i}{128}
     \\times 2 \\pi)\\right)_{i \\in (0, 1, ..., 127)}\\). Then:
 
-    \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_\\text{avg}^{10}| \\right)\\]
+    \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_{W_\\text{avg}}| \\right)\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.

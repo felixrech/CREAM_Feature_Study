@@ -227,7 +227,7 @@ def spectral_flatness(spectrum_amp):
     \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SPF = \\frac{\\sqrt[N]{\\prod_{f \\in f_{bins}} x_f}}
-                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
+                   {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
@@ -310,7 +310,7 @@ def spectral_centroid(spectrum_amp, current, power_frequency=POWER_FREQUENCY,
     Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
     \\(f\\) in the current&#39;s spectrum. Then:
 
-    \\[SPF = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
+    \\[C_f = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
                    {\\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
@@ -354,7 +354,7 @@ def signal_to_signal_mean_ratio(spectrum_amp):
     \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SSMR = \\frac{\\max_{f \\in f_{bins}} x_f}
-                    {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
+                    {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
@@ -472,11 +472,11 @@ def high_frequency_spectral_mean(spectrum_amp, filter_type=&#39;zero&#39;,
     &#34;&#34;&#34;Calculates the High frequency spectral mean (HFSPM).
 
     The high frequency spectral mean is the mean of spectral amplitudes after
-    application of a high pass filter: Let \\(x_{f}\\) be the real-part
-    amplitude of the bin with frequency \\(f\\) in the current&#39;s spectrum and
-    \\(N\\) the number of bins.
+    application of a high pass filter: Let \\(x_{f}&#39;\\) be the real-part
+    amplitude of the bin with frequency \\(f\\) in the current&#39;s spectrum after
+    application of the high pass filter and \\(N\\) the number of bins.
 
-    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f\\]
+    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f&#39;\\]
 
     For high pass filter type options see the high_pass_filter function.
 
@@ -739,10 +739,10 @@ options see the high_pass_filter function.</p>
 <dd>
 <div class="desc"><p>Calculates the High frequency spectral mean (HFSPM).</p>
 <p>The high frequency spectral mean is the mean of spectral amplitudes after
-application of a high pass filter: Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part
-amplitude of the bin with frequency <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum and
-<span><span class="MathJax_Preview">N</span><script type="math/tex">N</script></span> the number of bins.</p>
-<p><span><span class="MathJax_Preview">HFSPM = \frac{1}{N} \sum_{f \in f_{bins}} x_f</span><script type="math/tex; mode=display">HFSPM = \frac{1}{N} \sum_{f \in f_{bins}} x_f</script></span></p>
+application of a high pass filter: Let <span><span class="MathJax_Preview">x_{f}'</span><script type="math/tex">x_{f}'</script></span> be the real-part
+amplitude of the bin with frequency <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum after
+application of the high pass filter and <span><span class="MathJax_Preview">N</span><script type="math/tex">N</script></span> the number of bins.</p>
+<p><span><span class="MathJax_Preview">HFSPM = \frac{1}{N} \sum_{f \in f_{bins}} x_f'</span><script type="math/tex; mode=display">HFSPM = \frac{1}{N} \sum_{f \in f_{bins}} x_f'</script></span></p>
 <p>For high pass filter type options see the high_pass_filter function.</p>
 <h2 id="args">Args</h2>
 <dl>
@@ -767,11 +767,11 @@ amplitude of the bin with frequency <span><span class="MathJax_Preview">f</span>
     &#34;&#34;&#34;Calculates the High frequency spectral mean (HFSPM).
 
     The high frequency spectral mean is the mean of spectral amplitudes after
-    application of a high pass filter: Let \\(x_{f}\\) be the real-part
-    amplitude of the bin with frequency \\(f\\) in the current&#39;s spectrum and
-    \\(N\\) the number of bins.
+    application of a high pass filter: Let \\(x_{f}&#39;\\) be the real-part
+    amplitude of the bin with frequency \\(f\\) in the current&#39;s spectrum after
+    application of the high pass filter and \\(N\\) the number of bins.
 
-    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f\\]
+    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f&#39;\\]
 
     For high pass filter type options see the high_pass_filter function.
 
@@ -945,8 +945,8 @@ method (use the second element of its return value).</p>
 <p>Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part amplitude of the bin with frequency
 <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum. Then:</p>
 <p><span><span class="MathJax_Preview">SSMR = \frac{\max_{f \in f_{bins}} x_f}
-{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">SSMR = \frac{\max_{f \in f_{bins}} x_f}
-{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</script></span></p>
+{\text{mean}\left(\{x_f | f \in f_{bins}\}\right)}</span><script type="math/tex; mode=display">SSMR = \frac{\max_{f \in f_{bins}} x_f}
+{\text{mean}\left(\{x_f | f \in f_{bins}\}\right)}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>spectrum_amp</code></strong></dt>
@@ -965,7 +965,7 @@ method (use the second element of its return value).</p>
     \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SSMR = \\frac{\\max_{f \\in f_{bins}} x_f}
-                    {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
+                    {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
@@ -984,8 +984,8 @@ method (use the second element of its return value).</p>
 <div class="desc"><p>Calculates the Spectral centroid <span><span class="MathJax_Preview">C_f</span><script type="math/tex">C_f</script></span>.</p>
 <p>Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part amplitude of the bin with frequency
 <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum. Then:</p>
-<p><span><span class="MathJax_Preview">SPF = \frac{\sum_{f \in f_{bins}} x_f \times f}
-{\sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">SPF = \frac{\sum_{f \in f_{bins}} x_f \times f}
+<p><span><span class="MathJax_Preview">C_f = \frac{\sum_{f \in f_{bins}} x_f \times f}
+{\sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">C_f = \frac{\sum_{f \in f_{bins}} x_f \times f}
 {\sum_{f \in f_{bins}} x_f}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
@@ -1005,7 +1005,7 @@ method (use the second element of its return value).</p>
     Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
     \\(f\\) in the current&#39;s spectrum. Then:
 
-    \\[SPF = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
+    \\[C_f = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
                    {\\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
@@ -1031,8 +1031,8 @@ method (use the second element of its return value).</p>
 <p>Let <span><span class="MathJax_Preview">x_{f}</span><script type="math/tex">x_{f}</script></span> be the real-part amplitude of the bin with frequency
 <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span> in the current's spectrum. Then:</p>
 <p><span><span class="MathJax_Preview">SPF = \frac{\sqrt[N]{\prod_{f \in f_{bins}} x_f}}
-{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</span><script type="math/tex; mode=display">SPF = \frac{\sqrt[N]{\prod_{f \in f_{bins}} x_f}}
-{\frac{1}{N} \sum_{f \in f_{bins}} x_f}</script></span></p>
+{\text{mean}\left(\{x_f | f \in f_{bins}\}\right)}</span><script type="math/tex; mode=display">SPF = \frac{\sqrt[N]{\prod_{f \in f_{bins}} x_f}}
+{\text{mean}\left(\{x_f | f \in f_{bins}\}\right)}</script></span></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>spectrum_amp</code></strong></dt>
@@ -1051,7 +1051,7 @@ method (use the second element of its return value).</p>
     \\(f\\) in the current&#39;s spectrum. Then:
 
     \\[SPF = \\frac{\\sqrt[N]{\\prod_{f \\in f_{bins}} x_f}}
-                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
+                   {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.

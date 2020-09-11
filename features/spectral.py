@@ -200,7 +200,7 @@ def spectral_flatness(spectrum_amp):
     \\(f\\) in the current's spectrum. Then:
 
     \\[SPF = \\frac{\\sqrt[N]{\\prod_{f \\in f_{bins}} x_f}}
-                   {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
+                   {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
@@ -283,7 +283,7 @@ def spectral_centroid(spectrum_amp, current, power_frequency=POWER_FREQUENCY,
     Let \\(x_{f}\\) be the real-part amplitude of the bin with frequency
     \\(f\\) in the current's spectrum. Then:
 
-    \\[SPF = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
+    \\[C_f = \\frac{\\sum_{f \\in f_{bins}} x_f \\times f}
                    {\\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
@@ -327,7 +327,7 @@ def signal_to_signal_mean_ratio(spectrum_amp):
     \\(f\\) in the current's spectrum. Then:
 
     \\[SSMR = \\frac{\\max_{f \\in f_{bins}} x_f}
-                    {\\frac{1}{N} \\sum_{f \\in f_{bins}} x_f}\\]
+                    {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
         spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
@@ -445,11 +445,11 @@ def high_frequency_spectral_mean(spectrum_amp, filter_type='zero',
     """Calculates the High frequency spectral mean (HFSPM).
 
     The high frequency spectral mean is the mean of spectral amplitudes after
-    application of a high pass filter: Let \\(x_{f}\\) be the real-part
-    amplitude of the bin with frequency \\(f\\) in the current's spectrum and
-    \\(N\\) the number of bins.
+    application of a high pass filter: Let \\(x_{f}'\\) be the real-part
+    amplitude of the bin with frequency \\(f\\) in the current's spectrum after
+    application of the high pass filter and \\(N\\) the number of bins.
 
-    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f\\]
+    \\[HFSPM = \\frac{1}{N} \\sum_{f \\in f_{bins}} x_f'\\]
 
     For high pass filter type options see the high_pass_filter function.
 

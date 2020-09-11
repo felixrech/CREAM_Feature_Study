@@ -345,8 +345,8 @@ def positive_negative_half_cycle_ratio(current, period_length=PERIOD_LENGTH):
 def max_min_ratio(current):
     """Calculates the Max-min ratio (MAMI).
 
-    \\[MAMI = \\frac{\\min\\{|\\max(I_\\text{ROI})|, |\\min(I_\\text{ROI})|\\}}
-                    {\\max\\{|\\max(I_\\text{ROI})|, |\\min(I_\\text{ROI})|\\}}\\]
+    \\[MAMI = \\frac{\\min\\{|\\max(I)|, |\\min(I)|\\}}
+                    {\\max\\{|\\max(I)|, |\\min(I)|\\}}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -362,7 +362,7 @@ def max_min_ratio(current):
 def peak_mean_ratio(current):
     """Calculates the Peak-mean ratio (PMR).
 
-    \\[MAMI = \\frac{\\max(|I_\\text{ROI}|}{\\text{mean}(|I_\\text{ROI}|}\\]
+    \\[PMR = \\frac{\\max(|I|)}{\\text{mean}(|I|)}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -396,8 +396,8 @@ def max_inrush_ratio(current, period_length=PERIOD_LENGTH):
 def mean_variance_ratio(current):
     """Calculates the Mean variance ratio (MVR).
 
-    \\[MVR = \\frac{\\text{mean}(|I_\\text{ROI}|)}
-                   {\\text{var}(|I_\\text{ROI}|)}\\]
+    \\[MVR = \\frac{\\text{mean}(|I|)}
+                   {\\text{var}(|I|)}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -412,12 +412,12 @@ def mean_variance_ratio(current):
 def waveform_distortion(current, period_length=PERIOD_LENGTH):
     """Calculates the Waveform distortion WFD.
 
-    Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
+    Let \\(I_{W_\\text{avg}}\\) be the current measurements (aligned with the
     rising zero crossing) averaged over the first ten periods and normalized
     (with their maximum value). Let \\(Y_{\\sin} = \\left(\\sin(\\frac{i}{128}
     \\times 2 \\pi)\\right)_{i \\in (0, 1, ..., 127)}\\). Then:
 
-    \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_\\text{avg}^{10}| \\right)\\]
+    \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_{W_\\text{avg}}| \\right)\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -434,12 +434,12 @@ def waveform_distortion(current, period_length=PERIOD_LENGTH):
 def waveform_approximation(current, period_length=PERIOD_LENGTH):
     """Calculates the Waveform approximation (WFA).
 
-    Let \\(I_\\text{avg}^{10}\\) be the current measurements (aligned with the
+    Let \\(I_{W_\\text{avg}}\\) be the current measurements (aligned with the
     rising zero crossing) averaged over the first ten periods and normalized
     (with their maximum value). Let \\(S = (0, 6, 12, 19, ..., 114, 120)\\) be
     a list of 20 equidistant sampling points over one period. Then:
 
-    \\[WFA = \\left( I_{\\text{avg}, s}^{10} \\right)_{s \\in S}\\]
+    \\[WFA = \\left( I_{W_\\text{avg}, s} \\right)_{s \\in S}\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -457,11 +457,10 @@ def waveform_approximation(current, period_length=PERIOD_LENGTH):
 def current_over_time(current, period_length=PERIOD_LENGTH):
     """Calculates the Current over time (COT).
 
-    Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
-    the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
 
-    \\[COT = \\left( I_\\text{rms}^{(1)}, I_\\text{rms}^{(2)}, ...,
-    I_\\text{rms}^{(25)} \\right)\\]
+    \\[COT = \\left( I_{P(1)}, I_{P(2)}, ..., I_{P(25)} \\right)\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
@@ -474,14 +473,14 @@ def current_over_time(current, period_length=PERIOD_LENGTH):
 
 
 def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
-    """Calculates the Admittance over time (COT).
+    """Calculates the Admittance over time (AOT).
 
-    Let \\(I_\\text{rms}^{(k)}\\) and \\(V_\\text{rms}^{(k)}\\) be the RMS of
-    the current and voltage measurements of the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\). Further, let
+    \\(V_{W(k)}\\) and \\(V_{P(k)}\\) be analogous for the voltage.
 
-    \\[AOT = \\left( \\frac{I_\\text{rms}^{(1)}}{V_\\text{rms}^{(1)}},
-    \\frac{I_\\text{rms}^{(2)}}{V_\\text{rms}^{(2)}}, ...,
-    \\frac{I_\\text{rms}^{(25)}}{V_\\text{rms}^{(25)}} \\right)\\]
+    \\[AOT = \\left( \\frac{I_{P(1)}}{V_{P(1)}}, \\frac{I_{P(2)}}{V_{P(2)}},
+    ..., \\frac{I_{P(25)}}{V_{P(25)}} \\right)\\]
 
     Args:
         voltage: (n_samples, window_size)-dimensional array of voltage measurements.
@@ -499,12 +498,11 @@ def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
 def periods_to_steady_state_current(current, period_length=PERIOD_LENGTH):
     """Calculates the Periods to steady state current (PSS).
 
-    Let \\(I_\\text{rms}^{(k)}\\) be the RMS of the current measurements of
-    the \\(k\\)th period. Then:
+    Let \\(I_{W(k)}\\) denote the \\(k\\)th of \\(N\\) periods of current
+    measurements. Then \\(I_{P(k)} = \\text{rms}(I_{W(k)})\\) and
 
-    \\[L = \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT)) +
-    \\text{median}(COT)\\]
-    \\[PSS = \\underset{k}{\\arg \\min} \\thinspace I_\\text{rms}^{(k)} > L\\]
+    \\[PSS = \\underset{k}{\\arg \\min} \\thinspace I_{P(k)} < \\text{median}
+    (COT) + \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT))\\]
 
     Args:
         current: (n_samples, window_size)-dimensional array of current measurements.
