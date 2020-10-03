@@ -25,7 +25,8 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import scipy
+<pre><code class="python">import copy
+import scipy
 import itertools
 import numpy as np
 import pandas as pd
@@ -90,7 +91,9 @@ def forward_selection(features, y, feature_eval, max_features=None,
 
     # Limit features to one-dimensional features if specified
     if limit_one_dimensional:
-        features = remove_features_by_dimension(features, 1)
+        # Copy features to not change the argument
+        # TODO: Check that this is enough
+        features = remove_features_by_dimension(copy.deepcopy(features), 1)
 
     # Set up variables
     df = pd.DataFrame({&#39;features&#39;: itertools.repeat([], len(features)),
@@ -125,7 +128,7 @@ def forward_selection(features, y, feature_eval, max_features=None,
     return df.iloc[0]
 
 
-def get_evaluation(model, custom_params):
+def get_evaluation(model, custom_params={}):
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
@@ -138,7 +141,7 @@ def get_evaluation(model, custom_params):
     elif model == &#39;decision_tree&#39;:
         classifier = DecisionTreeClassifier()
         param_grid = {&#39;max_depth&#39;: range(1, 20, 2),
-                      &#39;min_samples_split&#39;: [5, 10, 50, 100]}
+                      &#39;min_samples_split&#39;: [5, 10, 50]}
     elif model == &#39;adaboost&#39;:
         classifier = AdaBoostClassifier()
         param_grid = {&#39;n_estimators&#39;: [2, 5, 10, 20, 50]}
@@ -272,7 +275,9 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 
     # Limit features to one-dimensional features if specified
     if limit_one_dimensional:
-        features = remove_features_by_dimension(features, 1)
+        # Copy features to not change the argument
+        # TODO: Check that this is enough
+        features = remove_features_by_dimension(copy.deepcopy(features), 1)
 
     # Set up variables
     df = pd.DataFrame({&#39;features&#39;: itertools.repeat([], len(features)),
@@ -308,7 +313,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.feature_selection.get_evaluation"><code class="name flex">
-<span>def <span class="ident">get_evaluation</span></span>(<span>model, custom_params)</span>
+<span>def <span class="ident">get_evaluation</span></span>(<span>model, custom_params={})</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -316,7 +321,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_evaluation(model, custom_params):
+<pre><code class="python">def get_evaluation(model, custom_params={}):
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
@@ -329,7 +334,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
     elif model == &#39;decision_tree&#39;:
         classifier = DecisionTreeClassifier()
         param_grid = {&#39;max_depth&#39;: range(1, 20, 2),
-                      &#39;min_samples_split&#39;: [5, 10, 50, 100]}
+                      &#39;min_samples_split&#39;: [5, 10, 50]}
     elif model == &#39;adaboost&#39;:
         classifier = AdaBoostClassifier()
         param_grid = {&#39;n_estimators&#39;: [2, 5, 10, 20, 50]}

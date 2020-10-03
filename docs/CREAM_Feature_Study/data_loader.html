@@ -46,15 +46,20 @@ PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 ##############################################################################
 
 
-def get_component_events():
+def get_component_events(filter=True):
     # Import data utility from the CREAM repo
     sys.path.append(PATH_TO_CREAM)
     from data_utility import CREAM_Day
 
     cream = CREAM_Day(PATH_TO_DATA + &#39;2018-08-23/&#39;)
 
-    return cream.load_component_events(PATH_TO_DATA + &#34;component_events.csv&#34;,
-                                       filter_day=False)
+    events = cream.load_component_events(PATH_TO_DATA + &#34;component_events.csv&#34;,
+                                         filter_day=False)
+    if not filter:
+        return events
+    else:
+        return events[((events.Component != &#39;unlabeled&#39;) &amp;
+                       (events.Event_Type == &#39;On&#39;))]
 
 
 def read_event(id, duration):
@@ -200,10 +205,13 @@ def _synchronize_period_single(voltage, current, periods, use_periods=10):
     # Extract area of interest
     x = current[: (periods+1)*PERIOD_LENGTH]
 
-    # Calculate offset to first start of sin
-    roots = np.mod(np.where((x[:use_periods*PERIOD_LENGTH] &lt;= 0)
-                            &amp; (x[1:use_periods*PERIOD_LENGTH+1] &gt; 0))[0], 128)
-    offset = int(np.mean(roots)) + 1
+    # Get all zero crossings within the first use_periods periods
+    roots = np.mod(np.where(
+        (x[:use_periods*PERIOD_LENGTH] &lt;= 0)
+        &amp; (x[1:use_periods*PERIOD_LENGTH+1] &gt; 0)
+    )[0], 128)  # mod makes sure indices (and their mean) are in [0, 128)
+    # Calculate mean of zero crossings and fail to 0 if there are none
+    offset = int(np.mean(roots)) + 1 if len(roots) &gt; 0 else 0
 
     # Return cut area
     return (voltage[offset: offset + periods*PERIOD_LENGTH],
@@ -248,7 +256,7 @@ def synchronize_period(voltage, current, periods=-1):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="CREAM_Feature_Study.data_loader.get_component_events"><code class="name flex">
-<span>def <span class="ident">get_component_events</span></span>(<span>)</span>
+<span>def <span class="ident">get_component_events</span></span>(<span>filter=True)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -256,15 +264,20 @@ def synchronize_period(voltage, current, periods=-1):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_component_events():
+<pre><code class="python">def get_component_events(filter=True):
     # Import data utility from the CREAM repo
     sys.path.append(PATH_TO_CREAM)
     from data_utility import CREAM_Day
 
     cream = CREAM_Day(PATH_TO_DATA + &#39;2018-08-23/&#39;)
 
-    return cream.load_component_events(PATH_TO_DATA + &#34;component_events.csv&#34;,
-                                       filter_day=False)</code></pre>
+    events = cream.load_component_events(PATH_TO_DATA + &#34;component_events.csv&#34;,
+                                         filter_day=False)
+    if not filter:
+        return events
+    else:
+        return events[((events.Component != &#39;unlabeled&#39;) &amp;
+                       (events.Event_Type == &#39;On&#39;))]</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.data_loader.get_events_sample"><code class="name flex">

@@ -19,15 +19,20 @@ PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 ##############################################################################
 
 
-def get_component_events():
+def get_component_events(filter=True):
     # Import data utility from the CREAM repo
     sys.path.append(PATH_TO_CREAM)
     from data_utility import CREAM_Day
 
     cream = CREAM_Day(PATH_TO_DATA + '2018-08-23/')
 
-    return cream.load_component_events(PATH_TO_DATA + "component_events.csv",
-                                       filter_day=False)
+    events = cream.load_component_events(PATH_TO_DATA + "component_events.csv",
+                                         filter_day=False)
+    if not filter:
+        return events
+    else:
+        return events[((events.Component != 'unlabeled') &
+                       (events.Event_Type == 'On'))]
 
 
 def read_event(id, duration):
@@ -173,10 +178,13 @@ def _synchronize_period_single(voltage, current, periods, use_periods=10):
     # Extract area of interest
     x = current[: (periods+1)*PERIOD_LENGTH]
 
-    # Calculate offset to first start of sin
-    roots = np.mod(np.where((x[:use_periods*PERIOD_LENGTH] <= 0)
-                            & (x[1:use_periods*PERIOD_LENGTH+1] > 0))[0], 128)
-    offset = int(np.mean(roots)) + 1
+    # Get all zero crossings within the first use_periods periods
+    roots = np.mod(np.where(
+        (x[:use_periods*PERIOD_LENGTH] <= 0)
+        & (x[1:use_periods*PERIOD_LENGTH+1] > 0)
+    )[0], 128)  # mod makes sure indices (and their mean) are in [0, 128)
+    # Calculate mean of zero crossings and fail to 0 if there are none
+    offset = int(np.mean(roots)) + 1 if len(roots) > 0 else 0
 
     # Return cut area
     return (voltage[offset: offset + periods*PERIOD_LENGTH],

@@ -12,30 +12,6 @@ SAMPLING_RATE = 6400  # Measurements / second
 PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 
 
-def _phase_shift_single(voltage, current, radian=True,
-                        period_length=PERIOD_LENGTH):
-    """Calculates phase shift of a single sample.
-
-    Args:
-        voltage: (window_size, )-dimensional array of voltage measurements.
-        current: (window_size, )-dimensional array of current measurements.
-        radian (bool): Whether to return as radian (True) or absolute value.
-
-    Returns:
-        Phase shift as int.
-    """
-    # Correlate voltage and current
-    corr = signal.correlate(voltage, current)
-    corr = corr[corr.size//2:corr.size//2+period_length]
-    # Maximize correlation (as number of measurements that v leads i)
-    phase_shift = corr.argmax() % period_length
-    if phase_shift != 0:
-        phase_shift = period_length - phase_shift
-    if radian:
-        return (phase_shift / period_length) * 2 * np.pi
-    return phase_shift
-
-
 def phase_shift(voltage, current, mains_frequency=POWER_FREQUENCY,
                 power_frequency=POWER_FREQUENCY, sampling_rate=SAMPLING_RATE):
     """Calculates Phase shift (unit: radian).

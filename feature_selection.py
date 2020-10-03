@@ -1,3 +1,4 @@
+import copy
 import scipy
 import itertools
 import numpy as np
@@ -63,7 +64,9 @@ def forward_selection(features, y, feature_eval, max_features=None,
 
     # Limit features to one-dimensional features if specified
     if limit_one_dimensional:
-        features = remove_features_by_dimension(features, 1)
+        # Copy features to not change the argument
+        # TODO: Check that this is enough
+        features = remove_features_by_dimension(copy.deepcopy(features), 1)
 
     # Set up variables
     df = pd.DataFrame({'features': itertools.repeat([], len(features)),
@@ -98,7 +101,7 @@ def forward_selection(features, y, feature_eval, max_features=None,
     return df.iloc[0]
 
 
-def get_evaluation(model, custom_params):
+def get_evaluation(model, custom_params={}):
     if model == 'knn':
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {'n_neighbors': np.arange(1, 20)}
@@ -111,7 +114,7 @@ def get_evaluation(model, custom_params):
     elif model == 'decision_tree':
         classifier = DecisionTreeClassifier()
         param_grid = {'max_depth': range(1, 20, 2),
-                      'min_samples_split': [5, 10, 50, 100]}
+                      'min_samples_split': [5, 10, 50]}
     elif model == 'adaboost':
         classifier = AdaBoostClassifier()
         param_grid = {'n_estimators': [2, 5, 10, 20, 50]}
