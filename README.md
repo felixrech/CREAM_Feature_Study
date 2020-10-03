@@ -1,4 +1,4 @@
-# Code for the CREAM feature study
+# Code of a feature study on the CREAM dataset
 
 This repo contains a package of the features in a feature study for the CREAM dataset implemented in Python using numpy, pandas, SciPy and PyWavelets. Additionally, notebooks with the code used for the data analysis, plots and feature evaluation in the paper are available.
 
