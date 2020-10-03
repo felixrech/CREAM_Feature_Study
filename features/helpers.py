@@ -24,7 +24,7 @@ PERIOD_LENGTH = 128
 
 def get_all_features(voltage, current):
     # Import here to avoid circular import
-    from features import vi, spectral
+    from features import vi, spectral, wavelet
 
     spec = spectral.spectrum(current)
     harmon = spectral.harmonics(current)
@@ -76,7 +76,11 @@ def get_all_features(voltage, current):
         "High frequency spectral centroid (quadratic-type filter)": spectral.high_frequency_spectral_centroid(spec, current, 'quadratic'),
         "High frequency spectral flatness (quadratic-type filter)": spectral.high_frequency_spectral_flatness(spec, 'quadratic'),
         "High frequency spectral mean (quadratic-type filter)": spectral.high_frequency_spectral_mean(spec, 'quadratic'),
-        "(High frequency) Spectral mean (no high pass filter)": spectral.high_frequency_spectral_mean(spec, 'none')
+        "(High frequency) Spectral mean (no high pass filter)": spectral.high_frequency_spectral_mean(spec, 'none'),
+        "Wavelet decomposition (1st level) energy": wavelet.first_level_energy(current),
+        "Wavelet decomposition (all levels) energy": wavelet.all_decomposition_levels_energy(current),
+        "Wavelet decomposition dominant scale": wavelet.dominant_scale(current),
+        "Wavelet decomposition energy of time": wavelet.energy_over_time(current)
     }
 
 
@@ -159,7 +163,7 @@ def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
 
 def normalize(X, method='max'):
     if method == 'max':
-        return X / np.max(X, axis=1).reshape(-1, 1)
+        return X / np.max(np.abs(X), axis=1).reshape(-1, 1)
     raise ValueError("Chosen method type does not exist, "
                      "please refer to the docstring for available methods!")
 

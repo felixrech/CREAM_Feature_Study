@@ -52,7 +52,7 @@ PERIOD_LENGTH = 128
 
 def get_all_features(voltage, current):
     # Import here to avoid circular import
-    from features import vi, spectral
+    from features import vi, spectral, wavelet
 
     spec = spectral.spectrum(current)
     harmon = spectral.harmonics(current)
@@ -104,7 +104,11 @@ def get_all_features(voltage, current):
         &#34;High frequency spectral centroid (quadratic-type filter)&#34;: spectral.high_frequency_spectral_centroid(spec, current, &#39;quadratic&#39;),
         &#34;High frequency spectral flatness (quadratic-type filter)&#34;: spectral.high_frequency_spectral_flatness(spec, &#39;quadratic&#39;),
         &#34;High frequency spectral mean (quadratic-type filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;quadratic&#39;),
-        &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;)
+        &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;),
+        &#34;Wavelet decomposition (1st level) energy&#34;: wavelet.first_level_energy(current),
+        &#34;Wavelet decomposition (all levels) energy&#34;: wavelet.all_decomposition_levels_energy(current),
+        &#34;Wavelet decomposition dominant scale&#34;: wavelet.dominant_scale(current),
+        &#34;Wavelet decomposition energy of time&#34;: wavelet.energy_over_time(current)
     }
 
 
@@ -187,7 +191,7 @@ def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
 
 def normalize(X, method=&#39;max&#39;):
     if method == &#39;max&#39;:
-        return X / np.max(X, axis=1).reshape(-1, 1)
+        return X / np.max(np.abs(X), axis=1).reshape(-1, 1)
     raise ValueError(&#34;Chosen method type does not exist, &#34;
                      &#34;please refer to the docstring for available methods!&#34;)
 
@@ -329,7 +333,7 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 </summary>
 <pre><code class="python">def get_all_features(voltage, current):
     # Import here to avoid circular import
-    from features import vi, spectral
+    from features import vi, spectral, wavelet
 
     spec = spectral.spectrum(current)
     harmon = spectral.harmonics(current)
@@ -381,7 +385,11 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
         &#34;High frequency spectral centroid (quadratic-type filter)&#34;: spectral.high_frequency_spectral_centroid(spec, current, &#39;quadratic&#39;),
         &#34;High frequency spectral flatness (quadratic-type filter)&#34;: spectral.high_frequency_spectral_flatness(spec, &#39;quadratic&#39;),
         &#34;High frequency spectral mean (quadratic-type filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;quadratic&#39;),
-        &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;)
+        &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;),
+        &#34;Wavelet decomposition (1st level) energy&#34;: wavelet.first_level_energy(current),
+        &#34;Wavelet decomposition (all levels) energy&#34;: wavelet.all_decomposition_levels_energy(current),
+        &#34;Wavelet decomposition dominant scale&#34;: wavelet.dominant_scale(current),
+        &#34;Wavelet decomposition energy of time&#34;: wavelet.energy_over_time(current)
     }</code></pre>
 </details>
 </dd>
@@ -396,7 +404,7 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 </summary>
 <pre><code class="python">def normalize(X, method=&#39;max&#39;):
     if method == &#39;max&#39;:
-        return X / np.max(X, axis=1).reshape(-1, 1)
+        return X / np.max(np.abs(X), axis=1).reshape(-1, 1)
     raise ValueError(&#34;Chosen method type does not exist, &#34;
                      &#34;please refer to the docstring for available methods!&#34;)</code></pre>
 </details>
