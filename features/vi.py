@@ -17,11 +17,11 @@ def phase_shift(voltage, current, mains_frequency=POWER_FREQUENCY,
     """Calculates Phase shift (unit: radian).
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Phase shift as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Phase shift as a (n_samples, 1)-dimensional array.
     """
     # Avoid circular imports
     from features.spectral import _get_default_window
@@ -43,12 +43,12 @@ def active_power(voltage, current, phase_shift=None, period_length=PERIOD_LENGTH
     \\[P = \\text{rms}(V) \\times \\text{rms}(I) \\times \\cos(\\phi)\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
-        phase_shift: (n_samples, 1)-dimensional array of phase shifts.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
+        phase_shift (numpy.ndarray): (n_samples, 1)-dimensional array of phase shifts.
 
     Returns:
-        Active power as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Active power as a (n_samples, 1)-dimensional array.
     """
     if phase_shift is None:
         phase_shift = phase_shift(voltage, current,
@@ -65,12 +65,12 @@ def reactive_power(voltage, current, phase_shift=None, period_length=PERIOD_LENG
     \\[Q = \\text{rms}(V) \\times \\text{rms}(I) \\times \\sin(\\phi)\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
-        phase_shift: (n_samples, 1)-dimensional array of phase shifts.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
+        phase_shift (numpy.ndarray): (n_samples, 1)-dimensional array of phase shifts.
 
     Returns:
-        Reactive power as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Reactive power as a (n_samples, 1)-dimensional array.
     """
     if phase_shift is None:
         phase_shift = phase_shift(voltage, current,
@@ -85,11 +85,11 @@ def apparent_power(voltage, current):
     \\[S = \\text{rms}(V) \\times \\text{rms}(I)\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Apparent power as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Apparent power as a (n_samples, 1)-dimensional array.
     """
     return rms(voltage) * rms(current)
 
@@ -103,14 +103,14 @@ def vi_trajectory(voltage, current, num_samples=20, num_periods=10,
     maximum.
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
         num_samples (int): Number of sampling points used.
         num_periods (int): Number of periods used for sampling
         normalize (bool): Whether to normalize (divide by max).
 
     Returns:
-        VI-trajectory as tuple of (n_samples, num_samples)-dimensional arrays of normalized voltage and current values.
+        numpy.ndarray: VI-trajectory as tuple of (n_samples, num_samples)-dimensional arrays of normalized voltage and current values.
     """
     # Calculate equidistant sampling points within each period
     sample = np.linspace(0, period_length-1, num=num_samples,
@@ -137,10 +137,10 @@ def form_factor(current):
     \\[FF = \\frac{\\text{rms}(I)}{\\text{mean}(|I|)}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Form factor as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Form factor as a (n_samples, 1)-dimensional array.
     """
     return rms(current) / np.mean(np.abs(current), axis=1).reshape(-1, 1)
 
@@ -151,10 +151,10 @@ def crest_factor(current):
     \\[CF = \\frac{\\max(|I|)}{\\text{rms}(I)}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Crest factor as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Crest factor as a (n_samples, 1)-dimensional array.
     """
     return np.max(np.abs(current), axis=1).reshape(-1, 1) / rms(current)
 
@@ -166,11 +166,11 @@ def resistance_mean(voltage, current):
     \\[R_\\text{mean} = \\frac{\\sqrt{\\text{mean}(V^2)}}{\\sqrt{\\text{mean}(I^2)}}\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Resistance as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Resistance as a (n_samples, 1)-dimensional array.
     """
     return rms(voltage) / rms(current)
 
@@ -182,11 +182,11 @@ def resistance_median(voltage, current):
     \\[R_\\text{median} = \\frac{\\sqrt{\\text{median}(V^2)}}{\\sqrt{\\text{median}(I^2)}}\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Resistance as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Resistance as a (n_samples, 1)-dimensional array.
     """
     numerator = np.sqrt(np.median(np.square(voltage), axis=1))
     denominator = np.sqrt(np.median(np.square(current), axis=1))
@@ -201,11 +201,11 @@ def admittance_mean(voltage, current):
     \\frac{\\sqrt{\\text{mean}(I^2)}}{\\sqrt{\\text{mean}(V^2)}}\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Admittance as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Admittance as a (n_samples, 1)-dimensional array.
     """
     return 1 / resistance_mean(voltage, current)
 
@@ -218,11 +218,11 @@ def admittance_median(voltage, current):
     \\frac{\\sqrt{\\text{median}(I^2)}}{\\sqrt{\\text{median}(V^2)}}\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Admittance as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Admittance as a (n_samples, 1)-dimensional array.
     """
     return 1 / resistance_median(voltage, current)
 
@@ -233,10 +233,10 @@ def log_attack_time(current, sampling_rate=SAMPLING_RATE):
     Unit used: ms.
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        LogAttackTime as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: LogAttackTime as a (n_samples, 1)-dimensional array.
     """
     starting_times = np.argmax(current, axis=1).reshape(-1, 1)
     starting_times = np.where(starting_times > 0, starting_times, 1)
@@ -255,11 +255,11 @@ def temporal_centroid(current, mains_frequency=POWER_FREQUENCY,
        {\\sum_{k=1}^N I_{P(k)}} \\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
         mains_frequency (int): Mains frequency, defaults to power frequency.
 
     Returns:
-        Temporal centroid as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Temporal centroid as a (n_samples, 1)-dimensional array.
     """
     # Calculate RMS of each period
     # TODO: Use apply_to_periods?
@@ -280,10 +280,10 @@ def inrush_current_ratio(current, period_length=PERIOD_LENGTH):
     \\[ICR =  \\frac{I_{P(1)}}{I_{P(N)}}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Inrush current ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Inrush current ratio as a (n_samples, 1)-dimensional array.
     """
     return rms(current[:, :period_length]) / rms(current[:, -period_length:])
 
@@ -298,10 +298,10 @@ def positive_negative_half_cycle_ratio(current, period_length=PERIOD_LENGTH):
                    {\\max\\{I_{P_\\text{pos}}, I_{P_\\text{neg}}\\}}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        PNR as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: PNR as a (n_samples, 1)-dimensional array.
     """
     # Create indices for positive and negative half cycles of sin wave
     idcs = np.arange(0, period_length * 10)
@@ -325,10 +325,10 @@ def max_min_ratio(current):
                     {\\max\\{|\\max(I)|, |\\min(I)|\\}}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Max-min ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Max-min ratio as a (n_samples, 1)-dimensional array.
     """
     extrema = np.hstack((np.abs(np.max(current, axis=1)).reshape(-1, 1),
                          np.abs(np.min(current, axis=1)).reshape(-1, 1)))
@@ -341,10 +341,10 @@ def peak_mean_ratio(current):
     \\[PMR = \\frac{\\max(|I|)}{\\text{mean}(|I|)}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Peak-mean ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Peak-mean ratio as a (n_samples, 1)-dimensional array.
     """
     return (np.max(np.abs(current), axis=1)
             / np.mean(np.abs(current), axis=1)).reshape(-1, 1)
@@ -359,10 +359,10 @@ def max_inrush_ratio(current, period_length=PERIOD_LENGTH):
     \\[MIR = \\frac{I_{P(1)}}{\\max(|I_{W(1)}|)}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Max inrush ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Max inrush ratio as a (n_samples, 1)-dimensional array.
     """
     first_period_rms = rms(current[:, :period_length])
     first_period_max = np.max(np.abs(current[:, :period_length]), axis=1)
@@ -376,10 +376,10 @@ def mean_variance_ratio(current):
                    {\\text{var}(|I|)}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Mean variance ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Mean variance ratio as a (n_samples, 1)-dimensional array.
     """
     return (np.mean(np.abs(current), axis=1)
             / np.var(np.abs(current), axis=1)).reshape(-1, 1)
@@ -396,10 +396,10 @@ def waveform_distortion(current, period_length=PERIOD_LENGTH):
     \\[WFD = \\sum \\left( |Y_{\\sin}| - |I_{W_\\text{avg}}| \\right)\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Waveform distortion as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Waveform distortion as a (n_samples, 1)-dimensional array.
     """
     current = normalize(average_periods(current, 10, period_length),
                         method='max')
@@ -418,10 +418,10 @@ def waveform_approximation(current, period_length=PERIOD_LENGTH):
     \\[WFA = \\left( I_{W_\\text{avg}, s} \\right)_{s \\in S}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Waveform approximation as a (n_samples, 20)-dimensional array.
+        numpy.ndarray: Waveform approximation as a (n_samples, 20)-dimensional array.
     """
     current = normalize(average_periods(current, 10, period_length),
                         method='max')
@@ -439,10 +439,10 @@ def current_over_time(current, period_length=PERIOD_LENGTH):
     \\[COT = \\left( I_{P(1)}, I_{P(2)}, ..., I_{P(25)} \\right)\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Current over time as a (n_samples, 25)-dimensional array.
+        numpy.ndarray: Current over time as a (n_samples, 25)-dimensional array.
     """
     return helpers.apply_to_periods(current, rms, 25, (0),
                                     period_length=period_length)
@@ -459,11 +459,11 @@ def admittance_over_time(voltage, current, period_length=PERIOD_LENGTH):
     ..., \\frac{I_{P(25)}}{V_{P(25)}} \\right)\\]
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Admittance over time as a (n_samples, 25)-dimensional array.
+        numpy.ndarray: Admittance over time as a (n_samples, 25)-dimensional array.
     """
     return (helpers.apply_to_periods(current, rms, 25, (0),
                                      period_length=period_length) /
@@ -481,10 +481,10 @@ def periods_to_steady_state_current(current, period_length=PERIOD_LENGTH):
     (COT) + \\frac{1}{8} \\cdot (\\max(COT) - \\text{median}(COT))\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Periods to steady state current as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Periods to steady state current as a (n_samples, 1)-dimensional array.
     """
     cot = current_over_time(current, period_length=period_length)
     l = (1/8 * (np.max(cot, axis=1) - np.median(cot, axis=1)) +
@@ -506,11 +506,11 @@ def transient_steady_states_ratio(current, n_periods=5,
     I_{W(N - \\text{n_periods} + 1)}, ..., I_{W(N)}\\rangle)}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
-        n_periods: Length of transient and steady state in periods
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
+        n_periods (int): Length of transient and steady state in periods
 
     Returns:
-        Transient steady states ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Transient steady states ratio as a (n_samples, 1)-dimensional array.
     """
     return (rms(current[:, :n_periods*period_length])
             / rms(current[:, -n_periods*period_length:])).reshape(-1, 1)
@@ -530,11 +530,11 @@ def current_rms(current, period_length=PERIOD_LENGTH):
     I_{W(N - \\nu + 2)}, ..., I_{W(N)}\\rangle)\\end{pmatrix}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
-        n_periods: Length of transient and steady state in periods
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
+        n_periods (int): Length of transient and steady state in periods
 
     Returns:
-        Transient steady states ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Transient steady states ratio as a (n_samples, 1)-dimensional array.
     """
     n = int(math.floor(current.shape[1] / period_length / 10))
     cutoff = n*10*period_length

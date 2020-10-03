@@ -17,15 +17,18 @@ def _get_default_window(current):
     interval = 12800 measurements -> window is calculated to be 8192
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Window as an int.
+        int: Window as an int.
     """
     return int(2**np.floor(np.log2(current.shape[1])))
 
 
 def _get_window_from_spectrum(spectrum_amp):
+    """
+    Calculates the window length used from a given spectrum.
+    """
     return (spectrum_amp.shape[1] - 1) * 2
 
 
@@ -41,11 +44,11 @@ def spectrum(current, window=None, sampling_rate=SAMPLING_RATE):
     get the corresponding frequencies with the spectral_frequencies method.
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
-        window: Optional, use window-sized subsets of current measurements for FFT.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
+        window (int): Optional, use window-sized subsets of current measurements for FFT.
 
     Returns:
-        Spectrum as a (n_samples, n_frequencies)-dimensional array.
+        numpy.ndarray: Spectrum as a (n_samples, n_frequencies)-dimensional array.
     """
     # If window is not specified floor to next power of two
     if window is None:
@@ -67,7 +70,7 @@ def spectral_frequencies(window, n=20, limit_to_harmonics=True,
         n (int): Number of harmonics.
 
     Returns:
-        Spectral frequencies as a list.
+        list: Spectral frequencies as a list.
     """
     freqs = fft.rfftfreq(window) * sampling_rate
     if limit_to_harmonics:
@@ -78,6 +81,8 @@ def spectral_frequencies(window, n=20, limit_to_harmonics=True,
 
 def _get_harmonics_indices(spectral_frequencies, n=20,
                            power_frequency=POWER_FREQUENCY):
+    """Calculates the indices of bins containing the harmonics.
+    """
     harmonics = np.arange(1, n+1) * power_frequency
     freqs = np.where(spectral_frequencies < 0, 0, spectral_frequencies)
     return np.argmin(np.abs(np.dstack([freqs]*n) - harmonics), axis=1).reshape(-1)
@@ -95,12 +100,12 @@ def harmonics(current, n=20, window=None,
     get the corresponding frequencies with the spectral_frequencies method.
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
         n (int): Number of harmonics.
         window (int): Only use window-sized subset of current measurements.
 
     Returns:
-        Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        numpy.ndarray: Harmonic amplitudes as a (n_samples, n)-dimensional array.
     """
     # If window is not specified floor to next power of two
     if window is None:
@@ -120,12 +125,12 @@ def _peak_amplitude_frequency(spectrum_amp, freqs, all=False):
     amplitude. Returns the most common of those frequencies.
 
     Args:
-        spectrum_amp: (n_samples, l)-dimensional array of spectral amplitudes
-        freqs: (l,)-dimensional array of corresponding frequencies
-        all: whether to return the most common frequency (False) or all (True)
+        spectrum_amp (numpy.ndarray): (n_samples, l)-dimensional array of spectral amplitudes
+        freqs (numpy.ndarray): (l,)-dimensional array of corresponding frequencies
+        all (bool): whether to return the most common frequency (False) or all (True)
 
     Returns:
-        Peak amplitude frequency as an int (or a (n_samples, 1)-dimensional array).
+        numpy.ndarray: Peak amplitude frequency as an int (or a (n_samples, 1)-dimensional array).
     """
     indices = np.argmax(spectrum_amp, axis=1).reshape(-1, 1)
 
@@ -148,11 +153,11 @@ def _mains_frequency_amplitude(spectrum_amp, mains_frequency=POWER_FREQUENCY,
     3. None: calculate as the frequency with peak amplitude in spectrum
 
     Args:
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
         mains_frequency (int): Mains frequency, defaults to power frequency.
 
     Returns:
-        Harmonic amplitudes as a(n_samples, n)-dimensional array.
+        numpy.ndarray: Harmonic amplitudes as a(n_samples, n)-dimensional array.
     """
     # If window is not specified floor to next power of two
     window = _get_window_from_spectrum(spectrum_amp)
@@ -183,10 +188,10 @@ def odd_even_ratio(harmonics_amp):
                    {\\text{mean}(x_{f_2}, x_{f_4}, ..., x_{f_{20}})}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        harmonics_amp (numpy.ndarray): Harmonic amplitudes as a (n_samples, n)-dimensional array.
 
     Returns:
-        Odd-even ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Odd-even ratio as a (n_samples, 1)-dimensional array.
     """
     odd, even = np.arange(0, 20, step=20), np.arange(1, 20, step=20)
     return (np.mean(harmonics_amp[:, odd], axis=1)
@@ -203,10 +208,10 @@ def spectral_flatness(spectrum_amp):
                    {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
-        Spectral flatness as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Spectral flatness as a (n_samples, 1)-dimensional array.
     """
     spectrum_amp = np.where(spectrum_amp == 0, 0.00001, spectrum_amp)
     return (geo_mean(spectrum_amp) / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)
@@ -223,11 +228,11 @@ def harmonics_energy_distribution(harmonics_amp, spectrum_amp):
     x_{f_{20}}]\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        harmonics_amp (numpy.ndarray): Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
-        Harmonics energy distribution as a (n_samples, 20)-dimensional array.
+        numpy.ndarray: Harmonics energy distribution as a (n_samples, 20)-dimensional array.
     """
     return harmonics_amp / _mains_frequency_amplitude(spectrum_amp)
 
@@ -243,10 +248,10 @@ def tristiumulus(harmonics_amp):
     \\[T_3 = \\frac{x_{f_5} + x_{f_6} + ... + x_{f_{10}}}{\\sum_{i=1}^{20} x_{f_i}}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        harmonics_amp (numpy.ndarray): Harmonic amplitudes as a (n_samples, n)-dimensional array.
 
     Returns:
-        Tristimulus as a (n_samples, 3)-dimensional array.
+        numpy.ndarray: Tristimulus as a (n_samples, 3)-dimensional array.
     """
     harmonics_sum = np.sum(harmonics_amp, axis=1)
     t_1 = harmonics_amp[:, 0] / harmonics_sum
@@ -267,11 +272,11 @@ def total_harmonic_distortion(harmonics_amp, spectrum_amp):
                    {x_{f_0}}\\]
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        harmonics_amp (numpy.ndarray): Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
-        Total harmonic distortion as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Total harmonic distortion as a (n_samples, 1)-dimensional array.
     """
     return (rms(harmonics_amp) / _mains_frequency_amplitude(spectrum_amp))
 
@@ -287,10 +292,10 @@ def spectral_centroid(spectrum_amp, current, power_frequency=POWER_FREQUENCY,
                    {\\sum_{f \\in f_{bins}} x_f}\\]
 
     Args:
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
-        Spectral centroid as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Spectral centroid as a (n_samples, 1)-dimensional array.
     """
     window = _get_default_window(current)
     freqs = spectral_frequencies(window, limit_to_harmonics=False,
@@ -309,10 +314,10 @@ def harmonic_spectral_centroid(current, power_frequency=POWER_FREQUENCY,
                    {\\sum_{i=1}^{50} x_{f_i}}\\]
 
     Args:
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
 
     Returns:
-        Harmonic spectral centroid as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Harmonic spectral centroid as a (n_samples, 1)-dimensional array.
     """
     harmonics_amp = harmonics(current, n=50, power_frequency=power_frequency,
                               sampling_rate=sampling_rate)
@@ -330,10 +335,10 @@ def signal_to_signal_mean_ratio(spectrum_amp):
                     {\\text{mean}\\left(\\{x_f | f \\in f_{bins}\\}\\right)}\\]
 
     Args:
-        spectrum_amp: Spectral amplitudes as a (n_samples, window)-dimensional array.
+        spectrum_amp (numpy.ndarray): Spectral amplitudes as a (n_samples, window)-dimensional array.
 
     Returns:
-        Signal to signal mean ratio as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Signal to signal mean ratio as a (n_samples, 1)-dimensional array.
     """
     return (np.max(spectrum_amp, axis=1)
             / np.mean(spectrum_amp, axis=1)).reshape(-1, 1)
@@ -346,10 +351,10 @@ def second_harmonic(harmonics_amp):
     method (use the second element of its return value).
 
     Args:
-        harmonics_amp: Harmonic amplitudes as a (n_samples, n)-dimensional array.
+        harmonics_amp (numpy.ndarray): Harmonic amplitudes as a (n_samples, n)-dimensional array.
 
     Returns:
-        Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
+        numpy.ndarray: Amplitude of the second harmonic as a (n_samples, 1)-dimensional array.
     """
     return harmonics_amp[:, [1]]
 

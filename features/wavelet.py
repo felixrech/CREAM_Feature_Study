@@ -36,8 +36,7 @@ def energy(signal, levels=None, wavelet=DEFAULT_WAVELET):
 
 
 def first_level_energy(current, wavelet=DEFAULT_WAVELET):
-    """
-    Calculates the energy of the first level wavelet decomposition.
+    """Calculates the energy of the first level wavelet decomposition.
 
     This is an ease-of-use interface to the energy() function.
 
@@ -52,8 +51,7 @@ def first_level_energy(current, wavelet=DEFAULT_WAVELET):
 
 
 def all_decomposition_levels_energy(current, wavelet=DEFAULT_WAVELET):
-    """
-    Calculates the energy of the all wavelet decomposition levels.
+    """Calculates the energy of the all wavelet decomposition levels.
 
     This is an ease-of-use interface to the energy() function.
 
@@ -68,8 +66,7 @@ def all_decomposition_levels_energy(current, wavelet=DEFAULT_WAVELET):
 
 
 def dominant_scale(signal, wavelet=DEFAULT_WAVELET):
-    """
-    Returns the dominant scale (=level) of the wavelet decomposition.
+    """Returns the dominant scale (=level) of the wavelet decomposition.
 
     The dominant scale is defined as the level with the maximum energy.
 
@@ -85,8 +82,7 @@ def dominant_scale(signal, wavelet=DEFAULT_WAVELET):
 
 
 def energy_over_time(signal, n_partitions=5, wavelet=DEFAULT_WAVELET):
-    """
-    Calculates the energy over time.
+    """Calculates the energy over time.
 
     The first level wavelet decomposition is applied to given signal and the
     details coefficient \\(c_D\\) then seperated into n_partitions equally
