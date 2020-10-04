@@ -32,6 +32,26 @@ import numpy as np
 DEFAULT_WAVELET = &#39;haar&#39;
 
 
+def details_coefficients(signal, level=&#39;max&#39;, wavelet=DEFAULT_WAVELET):
+    &#34;&#34;&#34;Calculates the details coefficients \\(c_D\\) of the given level
+    wavelet decomposition.
+
+    Args:
+        signal (numpy.ndarray): (n_samples, window_size)-dimensional numpy array.
+        level (int): Level of wavelet decomposition, defaults to maximum possible.
+        wavelet (str): Wavelet to use, defaults to haar (db1).
+
+    Returns:
+        numpy.ndarray: Details coefficients as a (n_samples, window_size)-dimensional array.
+
+    &#34;&#34;&#34;
+    if level == &#39;max&#39;:
+        level = pywt.dwt_max_level(signal.shape[1], wavelet)
+
+    dwt = pywt.wavedec(signal, wavelet, level=level, axis=1)
+    return dwt[1]
+
+
 def energy(signal, levels=None, wavelet=DEFAULT_WAVELET):
     &#34;&#34;&#34;Calculates the energy of the wavelet decomposition for each level.
 
@@ -181,6 +201,50 @@ def energy_over_time(signal, n_partitions=5, wavelet=DEFAULT_WAVELET):
         numpy.ndarray: Energy as a (n_samples, max_levels)-dimensional array.
     &#34;&#34;&#34;
     return energy(current, wavelet=wavelet)</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.wavelet.details_coefficients"><code class="name flex">
+<span>def <span class="ident">details_coefficients</span></span>(<span>signal, level='max', wavelet='haar')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculates the details coefficients <span><span class="MathJax_Preview">c_D</span><script type="math/tex">c_D</script></span> of the given level
+wavelet decomposition.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>signal</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>(n_samples, window_size)-dimensional numpy array.</dd>
+<dt><strong><code>level</code></strong> :&ensp;<code>int</code></dt>
+<dd>Level of wavelet decomposition, defaults to maximum possible.</dd>
+<dt><strong><code>wavelet</code></strong> :&ensp;<code>str</code></dt>
+<dd>Wavelet to use, defaults to haar (db1).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>numpy.ndarray</code></dt>
+<dd>Details coefficients as a (n_samples, window_size)-dimensional array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def details_coefficients(signal, level=&#39;max&#39;, wavelet=DEFAULT_WAVELET):
+    &#34;&#34;&#34;Calculates the details coefficients \\(c_D\\) of the given level
+    wavelet decomposition.
+
+    Args:
+        signal (numpy.ndarray): (n_samples, window_size)-dimensional numpy array.
+        level (int): Level of wavelet decomposition, defaults to maximum possible.
+        wavelet (str): Wavelet to use, defaults to haar (db1).
+
+    Returns:
+        numpy.ndarray: Details coefficients as a (n_samples, window_size)-dimensional array.
+
+    &#34;&#34;&#34;
+    if level == &#39;max&#39;:
+        level = pywt.dwt_max_level(signal.shape[1], wavelet)
+
+    dwt = pywt.wavedec(signal, wavelet, level=level, axis=1)
+    return dwt[1]</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.wavelet.dominant_scale"><code class="name flex">
@@ -392,6 +456,7 @@ partition <span><span class="MathJax_Preview">(E(c_D(i)))_{i \in \{1, 2, ..., \t
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="CREAM_Feature_Study.features.wavelet.all_decomposition_levels_energy" href="#CREAM_Feature_Study.features.wavelet.all_decomposition_levels_energy">all_decomposition_levels_energy</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.wavelet.details_coefficients" href="#CREAM_Feature_Study.features.wavelet.details_coefficients">details_coefficients</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.wavelet.dominant_scale" href="#CREAM_Feature_Study.features.wavelet.dominant_scale">dominant_scale</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.wavelet.energy" href="#CREAM_Feature_Study.features.wavelet.energy">energy</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.wavelet.energy_over_time" href="#CREAM_Feature_Study.features.wavelet.energy_over_time">energy_over_time</a></code></li>

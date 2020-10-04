@@ -5,6 +5,26 @@ import numpy as np
 DEFAULT_WAVELET = 'haar'
 
 
+def details_coefficients(signal, level='max', wavelet=DEFAULT_WAVELET):
+    """Calculates the details coefficients \\(c_D\\) of the given level
+    wavelet decomposition.
+
+    Args:
+        signal (numpy.ndarray): (n_samples, window_size)-dimensional numpy array.
+        level (int): Level of wavelet decomposition, defaults to maximum possible.
+        wavelet (str): Wavelet to use, defaults to haar (db1).
+
+    Returns:
+        numpy.ndarray: Details coefficients as a (n_samples, window_size)-dimensional array.
+
+    """
+    if level == 'max':
+        level = pywt.dwt_max_level(signal.shape[1], wavelet)
+
+    dwt = pywt.wavedec(signal, wavelet, level=level, axis=1)
+    return dwt[1]
+
+
 def energy(signal, levels=None, wavelet=DEFAULT_WAVELET):
     """Calculates the energy of the wavelet decomposition for each level.
 

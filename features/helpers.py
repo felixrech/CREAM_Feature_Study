@@ -77,6 +77,7 @@ def get_all_features(voltage, current):
         "High frequency spectral flatness (quadratic-type filter)": spectral.high_frequency_spectral_flatness(spec, 'quadratic'),
         "High frequency spectral mean (quadratic-type filter)": spectral.high_frequency_spectral_mean(spec, 'quadratic'),
         "(High frequency) Spectral mean (no high pass filter)": spectral.high_frequency_spectral_mean(spec, 'none'),
+        "Wavelet decomposition details coefficients (max level)": wavelet.details_coefficients(current),
         "Wavelet decomposition (1st level) energy": wavelet.first_level_energy(current),
         "Wavelet decomposition (all levels) energy": wavelet.all_decomposition_levels_energy(current),
         "Wavelet decomposition dominant scale": wavelet.dominant_scale(current),
