@@ -66,14 +66,14 @@ def print_feature_info(features):
     print(features.sort_values(&#39;dimension&#39;).to_string(index=False))
 
 
-def evaluate_feature(X, y, metric, classifier, param_grid):
+def _evaluate_feature(X, y, metric, classifier, param_grid):
     cv = GridSearchCV(classifier, param_grid, n_jobs=-1)
     cv.fit(X, y)
     score = np.mean(cross_val_score(cv, X, y, scoring=metric, n_jobs=-1))
     return score, cv.best_estimator_
 
 
-def remove_features_by_dimension(features, dimension):
+def _remove_features_by_dimension(features, dimension):
     remove_list = []
     for feature in features:
         if features[feature].shape[1] &gt; dimension:
@@ -83,8 +83,21 @@ def remove_features_by_dimension(features, dimension):
     return features
 
 
-def forward_selection(features, y, feature_eval, max_features=None,
-                      limit_one_dimensional=False):
+def stepwise_regression(features, y, feature_eval, max_features=None,
+                        limit_one_dimensional=False):
+    &#34;&#34;&#34;Uses the stepwise regression algorithm to approximate the best feature
+    combination for given classifier.
+
+    Args:
+        features (dict): Dictionary of features in form {&#39;f_name&#39;: (n_samples, f_dim)-array, ...}.
+        y (numpy.ndarray): (n_samples, )-dimensional array of true labels
+        feature_eval (function): Evaluation function as returned by get_evaluation(..).
+        max_features (int): Only consider feature combinations of at most max_features features.
+        limit_one_dimensional (bool): Only consider one-dimensional features.
+
+    Returns:
+        pandas.core.series.Series: Best feature combination, has labels &#39;features&#39;, &#39;score&#39;, and &#39;estimator&#39; (already fitted).
+    &#34;&#34;&#34;
     # Set maximum max_features if not specified
     if max_features is None:
         max_features = len(features)
@@ -93,39 +106,51 @@ def forward_selection(features, y, feature_eval, max_features=None,
     if limit_one_dimensional:
         # Copy features to not change the argument
         # TODO: Check that this is enough
-        features = remove_features_by_dimension(copy.deepcopy(features), 1)
+        features = _remove_features_by_dimension(copy.deepcopy(features), 1)
 
-    # Set up variables
-    df = pd.DataFrame({&#39;features&#39;: itertools.repeat([], len(features)),
-                       &#39;score&#39;: itertools.repeat(0, len(features))})
+    # Only for first iteration
+    df = pd.DataFrame({&#39;features&#39;: [[]], &#39;score&#39;: [0]})
 
-    # Add a maximum of max_features features
-    for n_features in range(max_features):
-        old_df = df
+    while True:
         best = df.iloc[0]
-        df = pd.DataFrame(columns=[&#39;new&#39;, &#39;features&#39;, &#39;score&#39;, &#39;estimator&#39;])
+        df = pd.DataFrame(
+            columns=[&#39;change_type&#39;, &#39;change&#39;, &#39;features&#39;, &#39;score&#39;, &#39;estimator&#39;]
+        )
 
-        # Calculate score for all remaining unselected features
-        for i, new_feature in enumerate(set(features) - set(best.features)):
-            print(f&#34;{line_del}\tLooking at new feature: {new_feature}&#34;, end=&#39;&#39;)
-            new_features = best.features + [new_feature]
-            comb_features = np.hstack([features[f] for f in new_features])
-            score, estimator = feature_eval(comb_features, y)
-            df.loc[i] = (new_feature, new_features, score, estimator)
+        # Add possible feature additions to dataframe
+        if len(best.features) &lt; max_features:
+            for new_feature in set(features) - set(best.features):
+                new_features = best.features + [new_feature]
+                df.loc[len(df)] = (&#39;addition of&#39;, new_feature,
+                                   new_features, 0., None)
 
-        # Prepare for next iteration
+        # Add possible feature removals to dataframe
+        if len(best.features) &gt; 1:
+            for rem_feature in best.features:
+                new_features = list(set(best.features) - set([rem_feature]))
+                df.loc[len(df)] = (&#39;removal of&#39;, rem_feature,
+                                   new_features, 0., None)
+
+        # Calculate score for each entry of dataframe
+        for i in range(len(df)):
+            print(f&#34;{line_del}Considering {df.loc[i, &#39;change_type&#39;]}&#34;
+                  f&#34; {df.loc[i, &#39;change&#39;]}...&#34;, end=&#39;&#39;)
+            feature_comb = np.hstack([features[f] for f in df.loc[i].features])
+            df.loc[i, &#39;score&#39;], df.loc[i, &#39;estimator&#39;] = feature_eval(
+                feature_comb, y)
+
+        # Print overview
         df = df.sort_values(&#39;score&#39;, ascending=False)
+        print(f&#34;{line_del}{df[[&#39;change_type&#39;, &#39;change&#39;, &#39;score&#39;]]}&#34;)
+
+        # Handle feature removal/addition or end of iteration
         new_best = df.iloc[0]
         if new_best.score &gt; best.score:
-            print(f&#34;{line_del}\n{df[[&#39;new&#39;, &#39;score&#39;]]}\n\n&#34;
-                  f&#34;{len(new_best.features)} Feature(s) selected with score &#34;
+            print(f&#34;{len(new_best.features)} Feature(s) selected with score &#34;
                   f&#34;{round(new_best.score, 3)}:\t{new_best.features}\n&#34;)
         else:
-            print(f&#34;{line_del}\n{df[[&#39;new&#39;, &#39;score&#39;]]}\n\n&#34;
-                  &#34;No new feature selected, returning&#34;)
-            break
-
-    return df.iloc[0]
+            print(&#34;No improvement, returning&#34;)
+            return df.iloc[0]
 
 
 def get_evaluation(model, custom_params={}):
@@ -148,14 +173,14 @@ def get_evaluation(model, custom_params={}):
     else:
         raise ValueError(f&#34;Classifier of type {model} not implemented&#34;)
 
-    return partial(evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
+    return partial(_evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
                    param_grid={**param_grid, **custom_params})
 
 
-def simple_forward_selection(n_features, y, model, max=None, one_dim=False,
-                             custom_params={}):
+def simple_stepwise_regression(n_features, y, model, max=None, one_dim=False,
+                               custom_params={}):
     evaluation = get_evaluation(model, custom_params)
-    return forward_selection(n_features, y, evaluation, max, one_dim)
+    return stepwise_regression(n_features, y, evaluation, max, one_dim)
 
 
 def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#39;,
@@ -199,22 +224,6 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="CREAM_Feature_Study.feature_selection.evaluate_feature"><code class="name flex">
-<span>def <span class="ident">evaluate_feature</span></span>(<span>X, y, metric, classifier, param_grid)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def evaluate_feature(X, y, metric, classifier, param_grid):
-    cv = GridSearchCV(classifier, param_grid, n_jobs=-1)
-    cv.fit(X, y)
-    score = np.mean(cross_val_score(cv, X, y, scoring=metric, n_jobs=-1))
-    return score, cv.best_estimator_</code></pre>
-</details>
-</dd>
 <dt id="CREAM_Feature_Study.feature_selection.feature_combinations"><code class="name flex">
 <span>def <span class="ident">feature_combinations</span></span>(<span>normed_features, y, n_features, metric='f1_macro', models=['knn', 'svc', 'ridge', 'decision_tree'])</span>
 </code></dt>
@@ -258,60 +267,6 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
     return df.sort_values(&#39;score&#39;, ascending=False)</code></pre>
 </details>
 </dd>
-<dt id="CREAM_Feature_Study.feature_selection.forward_selection"><code class="name flex">
-<span>def <span class="ident">forward_selection</span></span>(<span>features, y, feature_eval, max_features=None, limit_one_dimensional=False)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def forward_selection(features, y, feature_eval, max_features=None,
-                      limit_one_dimensional=False):
-    # Set maximum max_features if not specified
-    if max_features is None:
-        max_features = len(features)
-
-    # Limit features to one-dimensional features if specified
-    if limit_one_dimensional:
-        # Copy features to not change the argument
-        # TODO: Check that this is enough
-        features = remove_features_by_dimension(copy.deepcopy(features), 1)
-
-    # Set up variables
-    df = pd.DataFrame({&#39;features&#39;: itertools.repeat([], len(features)),
-                       &#39;score&#39;: itertools.repeat(0, len(features))})
-
-    # Add a maximum of max_features features
-    for n_features in range(max_features):
-        old_df = df
-        best = df.iloc[0]
-        df = pd.DataFrame(columns=[&#39;new&#39;, &#39;features&#39;, &#39;score&#39;, &#39;estimator&#39;])
-
-        # Calculate score for all remaining unselected features
-        for i, new_feature in enumerate(set(features) - set(best.features)):
-            print(f&#34;{line_del}\tLooking at new feature: {new_feature}&#34;, end=&#39;&#39;)
-            new_features = best.features + [new_feature]
-            comb_features = np.hstack([features[f] for f in new_features])
-            score, estimator = feature_eval(comb_features, y)
-            df.loc[i] = (new_feature, new_features, score, estimator)
-
-        # Prepare for next iteration
-        df = df.sort_values(&#39;score&#39;, ascending=False)
-        new_best = df.iloc[0]
-        if new_best.score &gt; best.score:
-            print(f&#34;{line_del}\n{df[[&#39;new&#39;, &#39;score&#39;]]}\n\n&#34;
-                  f&#34;{len(new_best.features)} Feature(s) selected with score &#34;
-                  f&#34;{round(new_best.score, 3)}:\t{new_best.features}\n&#34;)
-        else:
-            print(f&#34;{line_del}\n{df[[&#39;new&#39;, &#39;score&#39;]]}\n\n&#34;
-                  &#34;No new feature selected, returning&#34;)
-            break
-
-    return df.iloc[0]</code></pre>
-</details>
-</dd>
 <dt id="CREAM_Feature_Study.feature_selection.get_evaluation"><code class="name flex">
 <span>def <span class="ident">get_evaluation</span></span>(<span>model, custom_params={})</span>
 </code></dt>
@@ -341,7 +296,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
     else:
         raise ValueError(f&#34;Classifier of type {model} not implemented&#34;)
 
-    return partial(evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
+    return partial(_evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
                    param_grid={**param_grid, **custom_params})</code></pre>
 </details>
 </dd>
@@ -382,8 +337,8 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
     print(features.sort_values(&#39;dimension&#39;).to_string(index=False))</code></pre>
 </details>
 </dd>
-<dt id="CREAM_Feature_Study.feature_selection.remove_features_by_dimension"><code class="name flex">
-<span>def <span class="ident">remove_features_by_dimension</span></span>(<span>features, dimension)</span>
+<dt id="CREAM_Feature_Study.feature_selection.simple_stepwise_regression"><code class="name flex">
+<span>def <span class="ident">simple_stepwise_regression</span></span>(<span>n_features, y, model, max=None, one_dim=False, custom_params={})</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -391,29 +346,108 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def remove_features_by_dimension(features, dimension):
-    remove_list = []
-    for feature in features:
-        if features[feature].shape[1] &gt; dimension:
-            remove_list.append(feature)
-    for feature in remove_list:
-        features.pop(feature)
-    return features</code></pre>
+<pre><code class="python">def simple_stepwise_regression(n_features, y, model, max=None, one_dim=False,
+                               custom_params={}):
+    evaluation = get_evaluation(model, custom_params)
+    return stepwise_regression(n_features, y, evaluation, max, one_dim)</code></pre>
 </details>
 </dd>
-<dt id="CREAM_Feature_Study.feature_selection.simple_forward_selection"><code class="name flex">
-<span>def <span class="ident">simple_forward_selection</span></span>(<span>n_features, y, model, max=None, one_dim=False, custom_params={})</span>
+<dt id="CREAM_Feature_Study.feature_selection.stepwise_regression"><code class="name flex">
+<span>def <span class="ident">stepwise_regression</span></span>(<span>features, y, feature_eval, max_features=None, limit_one_dimensional=False)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Uses the stepwise regression algorithm to approximate the best feature
+combination for given classifier.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>features</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Dictionary of features in form {'f_name': (n_samples, f_dim)-array, &hellip;}.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>(n_samples, )-dimensional array of true labels</dd>
+<dt><strong><code>feature_eval</code></strong> :&ensp;<code>function</code></dt>
+<dd>Evaluation function as returned by get_evaluation(..).</dd>
+<dt><strong><code>max_features</code></strong> :&ensp;<code>int</code></dt>
+<dd>Only consider feature combinations of at most max_features features.</dd>
+<dt><strong><code>limit_one_dimensional</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Only consider one-dimensional features.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pandas.core.series.Series</code></dt>
+<dd>Best feature combination, has labels 'features', 'score', and 'estimator' (already fitted).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def simple_forward_selection(n_features, y, model, max=None, one_dim=False,
-                             custom_params={}):
-    evaluation = get_evaluation(model, custom_params)
-    return forward_selection(n_features, y, evaluation, max, one_dim)</code></pre>
+<pre><code class="python">def stepwise_regression(features, y, feature_eval, max_features=None,
+                        limit_one_dimensional=False):
+    &#34;&#34;&#34;Uses the stepwise regression algorithm to approximate the best feature
+    combination for given classifier.
+
+    Args:
+        features (dict): Dictionary of features in form {&#39;f_name&#39;: (n_samples, f_dim)-array, ...}.
+        y (numpy.ndarray): (n_samples, )-dimensional array of true labels
+        feature_eval (function): Evaluation function as returned by get_evaluation(..).
+        max_features (int): Only consider feature combinations of at most max_features features.
+        limit_one_dimensional (bool): Only consider one-dimensional features.
+
+    Returns:
+        pandas.core.series.Series: Best feature combination, has labels &#39;features&#39;, &#39;score&#39;, and &#39;estimator&#39; (already fitted).
+    &#34;&#34;&#34;
+    # Set maximum max_features if not specified
+    if max_features is None:
+        max_features = len(features)
+
+    # Limit features to one-dimensional features if specified
+    if limit_one_dimensional:
+        # Copy features to not change the argument
+        # TODO: Check that this is enough
+        features = _remove_features_by_dimension(copy.deepcopy(features), 1)
+
+    # Only for first iteration
+    df = pd.DataFrame({&#39;features&#39;: [[]], &#39;score&#39;: [0]})
+
+    while True:
+        best = df.iloc[0]
+        df = pd.DataFrame(
+            columns=[&#39;change_type&#39;, &#39;change&#39;, &#39;features&#39;, &#39;score&#39;, &#39;estimator&#39;]
+        )
+
+        # Add possible feature additions to dataframe
+        if len(best.features) &lt; max_features:
+            for new_feature in set(features) - set(best.features):
+                new_features = best.features + [new_feature]
+                df.loc[len(df)] = (&#39;addition of&#39;, new_feature,
+                                   new_features, 0., None)
+
+        # Add possible feature removals to dataframe
+        if len(best.features) &gt; 1:
+            for rem_feature in best.features:
+                new_features = list(set(best.features) - set([rem_feature]))
+                df.loc[len(df)] = (&#39;removal of&#39;, rem_feature,
+                                   new_features, 0., None)
+
+        # Calculate score for each entry of dataframe
+        for i in range(len(df)):
+            print(f&#34;{line_del}Considering {df.loc[i, &#39;change_type&#39;]}&#34;
+                  f&#34; {df.loc[i, &#39;change&#39;]}...&#34;, end=&#39;&#39;)
+            feature_comb = np.hstack([features[f] for f in df.loc[i].features])
+            df.loc[i, &#39;score&#39;], df.loc[i, &#39;estimator&#39;] = feature_eval(
+                feature_comb, y)
+
+        # Print overview
+        df = df.sort_values(&#39;score&#39;, ascending=False)
+        print(f&#34;{line_del}{df[[&#39;change_type&#39;, &#39;change&#39;, &#39;score&#39;]]}&#34;)
+
+        # Handle feature removal/addition or end of iteration
+        new_best = df.iloc[0]
+        if new_best.score &gt; best.score:
+            print(f&#34;{len(new_best.features)} Feature(s) selected with score &#34;
+                  f&#34;{round(new_best.score, 3)}:\t{new_best.features}\n&#34;)
+        else:
+            print(&#34;No improvement, returning&#34;)
+            return df.iloc[0]</code></pre>
 </details>
 </dd>
 </dl>
@@ -434,14 +468,12 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="CREAM_Feature_Study.feature_selection.evaluate_feature" href="#CREAM_Feature_Study.feature_selection.evaluate_feature">evaluate_feature</a></code></li>
 <li><code><a title="CREAM_Feature_Study.feature_selection.feature_combinations" href="#CREAM_Feature_Study.feature_selection.feature_combinations">feature_combinations</a></code></li>
-<li><code><a title="CREAM_Feature_Study.feature_selection.forward_selection" href="#CREAM_Feature_Study.feature_selection.forward_selection">forward_selection</a></code></li>
 <li><code><a title="CREAM_Feature_Study.feature_selection.get_evaluation" href="#CREAM_Feature_Study.feature_selection.get_evaluation">get_evaluation</a></code></li>
 <li><code><a title="CREAM_Feature_Study.feature_selection.normalize_features" href="#CREAM_Feature_Study.feature_selection.normalize_features">normalize_features</a></code></li>
 <li><code><a title="CREAM_Feature_Study.feature_selection.print_feature_info" href="#CREAM_Feature_Study.feature_selection.print_feature_info">print_feature_info</a></code></li>
-<li><code><a title="CREAM_Feature_Study.feature_selection.remove_features_by_dimension" href="#CREAM_Feature_Study.feature_selection.remove_features_by_dimension">remove_features_by_dimension</a></code></li>
-<li><code><a title="CREAM_Feature_Study.feature_selection.simple_forward_selection" href="#CREAM_Feature_Study.feature_selection.simple_forward_selection">simple_forward_selection</a></code></li>
+<li><code><a title="CREAM_Feature_Study.feature_selection.simple_stepwise_regression" href="#CREAM_Feature_Study.feature_selection.simple_stepwise_regression">simple_stepwise_regression</a></code></li>
+<li><code><a title="CREAM_Feature_Study.feature_selection.stepwise_regression" href="#CREAM_Feature_Study.feature_selection.stepwise_regression">stepwise_regression</a></code></li>
 </ul>
 </li>
 </ul>
