@@ -10,7 +10,7 @@ This work was done as part of a Bachelor's thesis in Computer Science at the Tec
 git clone https://github.com/FelixRech/CREAM_Feature_Study
 
 # Install/update the necessary dependencies for using the features
-pip3 install -U numpy pandas scipy pywt
+pip3 install -U numpy pandas scipy PyWavelets
 
 # For notebooks only (and the feature_boxplot function)
 pip3 install -U jupyter matplotlib pyplot-themes
