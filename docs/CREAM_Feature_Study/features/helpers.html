@@ -105,11 +105,16 @@ def get_all_features(voltage, current):
         &#34;High frequency spectral flatness (quadratic-type filter)&#34;: spectral.high_frequency_spectral_flatness(spec, &#39;quadratic&#39;),
         &#34;High frequency spectral mean (quadratic-type filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;quadratic&#39;),
         &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;),
-        &#34;Wavelet decomposition details coefficients (max level)&#34;: wavelet.details_coefficients(current),
-        &#34;Wavelet decomposition (1st level) energy&#34;: wavelet.first_level_energy(current),
-        &#34;Wavelet decomposition (all levels) energy&#34;: wavelet.all_decomposition_levels_energy(current),
-        &#34;Wavelet decomposition dominant scale&#34;: wavelet.dominant_scale(current),
-        &#34;Wavelet decomposition energy of time&#34;: wavelet.energy_over_time(current)
+        &#34;Wavelet decomposition details coefficients (max level, current)&#34;: wavelet.details_coefficients(current),
+        &#34;Wavelet decomposition (1st level) energy (current)&#34;: wavelet.first_level_energy(current),
+        &#34;Wavelet decomposition (all levels) energy (current)&#34;: wavelet.all_decomposition_levels_energy(current),
+        &#34;Wavelet decomposition dominant scale (current)&#34;: wavelet.dominant_scale(current),
+        &#34;Wavelet decomposition energy of time (current)&#34;: wavelet.energy_over_time(current),
+        &#34;Wavelet decomposition details coefficients (max level, voltage)&#34;: wavelet.details_coefficients(voltage),
+        &#34;Wavelet decomposition (1st level) energy (voltage)&#34;: wavelet.first_level_energy(voltage),
+        &#34;Wavelet decomposition (all levels) energy (voltage)&#34;: wavelet.all_decomposition_levels_energy(voltage),
+        &#34;Wavelet decomposition dominant scale (voltage)&#34;: wavelet.dominant_scale(voltage),
+        &#34;Wavelet decomposition energy of time (voltage)&#34;: wavelet.energy_over_time(voltage)
     }
 
 
@@ -387,11 +392,16 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
         &#34;High frequency spectral flatness (quadratic-type filter)&#34;: spectral.high_frequency_spectral_flatness(spec, &#39;quadratic&#39;),
         &#34;High frequency spectral mean (quadratic-type filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;quadratic&#39;),
         &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;),
-        &#34;Wavelet decomposition details coefficients (max level)&#34;: wavelet.details_coefficients(current),
-        &#34;Wavelet decomposition (1st level) energy&#34;: wavelet.first_level_energy(current),
-        &#34;Wavelet decomposition (all levels) energy&#34;: wavelet.all_decomposition_levels_energy(current),
-        &#34;Wavelet decomposition dominant scale&#34;: wavelet.dominant_scale(current),
-        &#34;Wavelet decomposition energy of time&#34;: wavelet.energy_over_time(current)
+        &#34;Wavelet decomposition details coefficients (max level, current)&#34;: wavelet.details_coefficients(current),
+        &#34;Wavelet decomposition (1st level) energy (current)&#34;: wavelet.first_level_energy(current),
+        &#34;Wavelet decomposition (all levels) energy (current)&#34;: wavelet.all_decomposition_levels_energy(current),
+        &#34;Wavelet decomposition dominant scale (current)&#34;: wavelet.dominant_scale(current),
+        &#34;Wavelet decomposition energy of time (current)&#34;: wavelet.energy_over_time(current),
+        &#34;Wavelet decomposition details coefficients (max level, voltage)&#34;: wavelet.details_coefficients(voltage),
+        &#34;Wavelet decomposition (1st level) energy (voltage)&#34;: wavelet.first_level_energy(voltage),
+        &#34;Wavelet decomposition (all levels) energy (voltage)&#34;: wavelet.all_decomposition_levels_energy(voltage),
+        &#34;Wavelet decomposition dominant scale (voltage)&#34;: wavelet.dominant_scale(voltage),
+        &#34;Wavelet decomposition energy of time (voltage)&#34;: wavelet.energy_over_time(voltage)
     }</code></pre>
 </details>
 </dd>
