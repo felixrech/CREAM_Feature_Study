@@ -1,3 +1,7 @@
+"""Implements all signal-related features.
+"""
+
+
 import math
 import numpy as np
 from scipy import fft

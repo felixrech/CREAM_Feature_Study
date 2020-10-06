@@ -1,3 +1,7 @@
+"""Implements all wavelet transform features.
+"""
+
+
 import pywt
 import numpy as np
 
