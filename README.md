@@ -32,6 +32,8 @@ vi.vi_trajectory(my_voltage_measurements, my_current_measurements)
 
 Note that you will have to adjust the `POWER_FREQUENCY`, `SAMPLING_RATE`, and `PERIOD_LENGTH` parameters to match your dataset. This can be done by using the respective arguments available in each feature's function or by editing the constants in the top of each submodule. The default values for the CREAM dataset are a power frequency of 50Hz, a sampling rate of 6.4kHz and a resulting period length of 128.
 
+A hosted version of the documentation is available [here](https://felixrech.github.io/CREAM_Feature_Study/CREAM_Feature_Study/features/).
+
 ### Interacting with the notebooks created for the thesis
 
 Navigate to location where you cloned the feature study and start up a Jupyter session:
