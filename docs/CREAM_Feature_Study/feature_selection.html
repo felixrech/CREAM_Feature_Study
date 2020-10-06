@@ -156,7 +156,7 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
 def get_evaluation(model, custom_params={}):
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
-        param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
+        param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20, 2)}
     elif model == &#39;svc&#39;:
         classifier = SVC()
         param_grid = {&#39;gamma&#39;: [0.1, 1, 10, 100]}
@@ -165,13 +165,13 @@ def get_evaluation(model, custom_params={}):
         param_grid = {&#39;alpha&#39;: [0.01, 0.05, 0.1, 0.5, 1, 5, 10]}
     elif model == &#39;decision_tree&#39;:
         classifier = DecisionTreeClassifier()
-        param_grid = {&#39;max_depth&#39;: range(1, 20, 2),
+        param_grid = {&#39;max_depth&#39;: np.arange(1, 20, 2),
                       &#39;min_samples_split&#39;: [5, 10, 50]}
     elif model == &#39;adaboost&#39;:
         classifier = AdaBoostClassifier()
         param_grid = {&#39;n_estimators&#39;: [2, 5, 10, 20, 50]}
     else:
-        raise ValueError(f&#34;Classifier of type {model} not implemented&#34;)
+        raise ValueError(f&#34;Classifier of type &#39;{model}&#39; not implemented&#34;)
 
     return partial(_evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
                    param_grid={**param_grid, **custom_params})
@@ -279,7 +279,7 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <pre><code class="python">def get_evaluation(model, custom_params={}):
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
-        param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20)}
+        param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20, 2)}
     elif model == &#39;svc&#39;:
         classifier = SVC()
         param_grid = {&#39;gamma&#39;: [0.1, 1, 10, 100]}
@@ -288,13 +288,13 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
         param_grid = {&#39;alpha&#39;: [0.01, 0.05, 0.1, 0.5, 1, 5, 10]}
     elif model == &#39;decision_tree&#39;:
         classifier = DecisionTreeClassifier()
-        param_grid = {&#39;max_depth&#39;: range(1, 20, 2),
+        param_grid = {&#39;max_depth&#39;: np.arange(1, 20, 2),
                       &#39;min_samples_split&#39;: [5, 10, 50]}
     elif model == &#39;adaboost&#39;:
         classifier = AdaBoostClassifier()
         param_grid = {&#39;n_estimators&#39;: [2, 5, 10, 20, 50]}
     else:
-        raise ValueError(f&#34;Classifier of type {model} not implemented&#34;)
+        raise ValueError(f&#34;Classifier of type &#39;{model}&#39; not implemented&#34;)
 
     return partial(_evaluate_feature, metric=&#39;f1_macro&#39;, classifier=classifier,
                    param_grid={**param_grid, **custom_params})</code></pre>
