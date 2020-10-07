@@ -20,6 +20,8 @@ PERIOD_LENGTH = SAMPLING_RATE // POWER_FREQUENCY
 
 
 def get_component_events(filter=True):
+    """Loads the array containing component events.
+    """
     # Import data utility from the CREAM repo
     sys.path.append(PATH_TO_CREAM)
     from data_utility import CREAM_Day
@@ -36,23 +38,27 @@ def get_component_events(filter=True):
 
 
 def read_event(id, duration):
+    """Reads in single event.
+    """
     with open(f"{PATH_TO_DATA}component_events/{id}.csv", 'r') as f:
         reader = csv.reader(f)
-        voltage = np.array(next(reader)[:int(duration*6400)]).astype(float)
-        current = np.array(next(reader)[:int(duration*6400)]).astype(float)
-    return voltage, current
+        voltage = np.array(next(reader)[:int(duration*SAMPLING_RATE)])
+        current = np.array(next(reader)[:int(duration*SAMPLING_RATE)])
+    return voltage.astype(float), current.astype(float)
 
 
 def read_dataset(component_events, start_offset=0, duration=2):
+    """Reads all events in given array.
+    """
     event_types, voltages, currents = [], [], []
 
     idcs = ((component_events.Component != 'unlabeled') &
             (component_events.Event_Type == 'On'))
-    full_duration = duration + (start_offset / 6400)
+    full_duration = duration + (start_offset / SAMPLING_RATE)
 
     for event in component_events[idcs].itertuples():
         # Print crude progress report
-        progress_percent = round(100 * ((len(event_types)+1) / 1499), 1)
+        progress_percent = round(100 * ((len(event_types)+1) / len(idcs)), 1)
         print(f"\r\r\r\r\r\r{progress_percent}%",  end='', flush=True)
         # Load current from csv file
         voltage, current = read_event(event.ID, duration=full_duration)
@@ -70,6 +76,17 @@ def read_dataset(component_events, start_offset=0, duration=2):
 
 
 def get_events_sample(size, events=None, seed=42, duration=4):
+    """Returns a random sample of events.
+
+    Args:
+        size (int): Number of samples.
+        events (numpy.ndarray): Array of component events, loads all labeled on-events if None.
+        seed (int): Random seed to use.
+        duration (float): Number of seconds to load of each component event.
+
+    Returns:
+        list: List of tuples containing event (pandas series) and tuple of voltage and current arrays.
+    """
     if events is None:
         events = get_component_events()
         events = events[(events.Component != 'unlabeled') &
@@ -92,8 +109,8 @@ def preprocess(voltage, current, periods, offsets=False):
     """Preprocesses data by removing area without activity and aligning with rising zero crossing
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
         periods (int): Length of area of interest in periods.
         offsets (bool): Whether to return offsets used (True) or only measurements.
 
@@ -116,8 +133,8 @@ def _offset_correct_single(voltage, current, periods, pre=5):
     1 ampere, so this is used to detect first occurrence of larger values.
 
     Args:
-        voltage: (window_size,)-dimensional array of voltage measurements.
-        current: (window_size,)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (window_size,)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (window_size,)-dimensional array of current measurements.
         periods (int): Length of area of interest in periods.
         pre (int): is subtracted from actual detected offset (for period offsetting).
 
@@ -141,8 +158,8 @@ def offset_correct(voltage, current, periods=51, pre=5):
     1 ampere, so this is used to detect first occurrence of larger values.
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
         periods (int): Length of area of interest in periods. Default is 51.
         pre (int): is subtracted from actual detected offset (for period offsetting).
 
@@ -167,8 +184,8 @@ def _synchronize_period_single(voltage, current, periods, use_periods=10):
     Offset is calculated as the mean of the first use_periods zero crossings.
 
     Args:
-        voltage: (window_size,)-dimensional array of voltage measurements.
-        current: (window_size,)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (window_size,)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (window_size,)-dimensional array of current measurements.
         periods (int): Length of area of interest in periods.
         use_periods (int): Number of zero crossings to average for offset calculation.
 
@@ -198,8 +215,8 @@ def synchronize_period(voltage, current, periods=-1):
     Offset is calculated as the mean of the first use_periods zero crossings.
 
     Args:
-        voltage: (n_samples, window_size)-dimensional array of voltage measurements.
-        current: (n_samples, window_size)-dimensional array of current measurements.
+        voltage (numpy.ndarray): (n_samples, window_size)-dimensional array of voltage measurements.
+        current (numpy.ndarray): (n_samples, window_size)-dimensional array of current measurements.
         periods (int): Length of area of interest in periods. Default is max possible.
         use_periods (int): Number of zero crossings to average for offset calculation.
 

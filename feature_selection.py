@@ -21,18 +21,18 @@ line_del = ''.join(itertools.repeat('\r', 50))
 
 
 def normalize_features(features):
+    """Use StandardScaler to standardize each feature in feature dictionary.
+    """
     scaler = StandardScaler()
     for feature in features:
         features[feature] = scaler.fit_transform(features[feature])
-        # if features[feature].shape[1] == 1:
-        #     features[feature] = scaler.fit_transform(features[feature])
-        # else:
-        #     features[feature] -= np.mean(features[feature], axis=(0, 1))
-        #     features[feature] /= np.std(features[feature], axis=(0,1))
     return features
 
 
 def print_feature_info(features):
+    """Print a table with feature name and dimension for features in features
+    dictionary.
+    """
     print(f"Total of {len(features)} features:\n")
     dims = [features[feature].shape[1] for feature in features]
     features = pd.DataFrame({'name': list(features.keys()), 'dimension': dims})
@@ -40,6 +40,9 @@ def print_feature_info(features):
 
 
 def _evaluate_feature(X, y, metric, classifier, param_grid):
+    """Evaluates a feature via GridSearchCV on param_grid, then calculating
+    the mean five-fold cross validation score with given metric.
+    """
     cv = GridSearchCV(classifier, param_grid, n_jobs=-1)
     cv.fit(X, y)
     score = np.mean(cross_val_score(cv, X, y, scoring=metric, n_jobs=-1))
@@ -47,6 +50,8 @@ def _evaluate_feature(X, y, metric, classifier, param_grid):
 
 
 def _remove_features_by_dimension(features, dimension):
+    """Removes features with dimension greater than given value from feature dictionary.
+    """
     remove_list = []
     for feature in features:
         if features[feature].shape[1] > dimension:
@@ -127,6 +132,9 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
 
 
 def get_evaluation(model, custom_params={}):
+    """Returns a evaluation function partially evaluated with default
+    parameters for param_grid and metric, as well as given classifier type.
+    """
     if model == 'knn':
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {'n_neighbors': np.arange(1, 20, 2)}
@@ -152,6 +160,19 @@ def get_evaluation(model, custom_params={}):
 
 def simple_stepwise_regression(n_features, y, model, max=None, one_dim=False,
                                custom_params={}):
+    """Ease-of use interface to the stepwise regression function.
+
+    Args:
+        n_features (dict): Dictionary of normalized features in form {'name': np.ndarray, ...}.
+        y (numpy.ndarray): Array containing the true labels.
+        model (str): String with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).
+        max (int): Maximum number of features to use.
+        one_dim (bool): Whether to only use one-dimensional features.
+        custom_params (dict): Dictionary of additional parameters for grid search.
+
+    Returns:
+        pandas.core.series.Series: Best feature combination, has labels 'features', 'score', and 'estimator' (already fitted).
+    """
     evaluation = get_evaluation(model, custom_params)
     return stepwise_regression(n_features, y, evaluation, max, one_dim)
 
