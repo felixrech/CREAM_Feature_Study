@@ -83,7 +83,6 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
     # Limit features to one-dimensional features if specified
     if limit_one_dimensional:
         # Copy features to not change the argument
-        # TODO: Check that this is enough
         features = _remove_features_by_dimension(copy.deepcopy(features), 1)
 
     # Only for first iteration
@@ -110,12 +109,17 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
                                    new_features, 0., None)
 
         # Calculate score for each entry of dataframe
-        for i in range(len(df)):
+        for i, _ in df.iterrows():
             print(f"{line_del}Considering {df.loc[i, 'change_type']}"
                   f" {df.loc[i, 'change']}...", end='')
             feature_comb = np.hstack([features[f] for f in df.loc[i].features])
-            df.loc[i, 'score'], df.loc[i, 'estimator'] = feature_eval(
-                feature_comb, y)
+            score, estimator = feature_eval(feature_comb, y)
+            # Work around pandas interpreting the AdaBoostClassifier as a list
+            # of DecisionTrees (at least save hyperparameters to refit later)
+            if type(estimator) == AdaBoostClassifier:
+                df.loc[i, ['score', 'estimator']] = score, str(estimator)
+            else:
+                df.loc[i, ['score', 'estimator']] = score, estimator
 
         # Print overview
         df = df.sort_values('score', ascending=False)
@@ -128,7 +132,7 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
                   f"{round(new_best.score, 3)}:\t{new_best.features}\n")
         else:
             print("No improvement, returning")
-            return df.iloc[0]
+            return best
 
 
 def get_evaluation(model, custom_params={}):
@@ -177,15 +181,30 @@ def simple_stepwise_regression(n_features, y, model, max=None, one_dim=False,
     return stepwise_regression(n_features, y, evaluation, max, one_dim)
 
 
-def feature_combinations(normed_features, y,  n_features, metric='f1_macro',
-                         models=['knn', 'svc', 'ridge', 'decision_tree']):
+def feature_combinations(normed_features, y,  num_features, metric='f1_macro',
+                         models=['knn', 'svc', 'ridge', 'decision_tree', 'adaboost']):
+    """Evaluate all combinations of exactly num_features features.
 
-    df = pd.DataFrame(columns=['model', 'feature_combination', 'dimension',
-                               'score'])
-    # Generator empty after first model if not converted to list
+    Args:
+        normed_features (dict): Dictionary of normalized features in form {'name': np.ndarray, ...}.
+        y (numpy.ndarray): Array containing the true labels.
+        num_features (int): Number of features to use.
+        metric (str): Metric to use.
+        models (list): List of string with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).
+
+    Returns:
+        pandas.DataFrame: DataFrame with columns 'model', 'feature_combination', 'dimension', 'score' for each combination of model and features.
+    """
+    df = pd.DataFrame(
+        columns=['model', 'feature_combination', 'dimension', 'score']
+    )
+    df['score'] = df['score'].astype(np.float)
+    df['dimension'] = df['dimension'].astype(np.int)
+
+    # Combination generator empty after first model if not converted to list
     feature_combs = list(itertools.combinations(normed_features.keys(),
-                                                n_features))
-    num_combs = int(scipy.special.comb(len(normed_features), n_features))
+                                                num_features))
+    num_combs = int(scipy.special.comb(len(normed_features), num_features))
     start = datetime.now()
 
     for j, model in enumerate(models):
@@ -193,19 +212,18 @@ def feature_combinations(normed_features, y,  n_features, metric='f1_macro',
 
         for i, combination in enumerate(feature_combs):
             now_num = j*num_combs + i + 1
-            remaining = (len(models)-(j+1)) * num_combs + num_combs - i
+            remaining = (len(models)-j) * num_combs - i
             time_remaining = (datetime.now() - start) / now_num * remaining
             print(f"{line_del}Model {j+1}/{len(models)}, "
                   f"feature combination {i+1}/{num_combs}, "
-                  f"time remaining: {str(time_remaining)[:-7]}", end='')
+                  f"total time remaining: {str(time_remaining)[:-7]}", end='')
 
-            X = np.empty((y.shape[0], 0))
-            for feature in combination:
-                X = np.hstack((X, normed_features[feature]))
-                score, _ = evaluation(X, y)
-                df.loc[now_num] = (model, combination, X.shape[1], score)
+            feature_comb = np.hstack([normed_features[f] for f in combination])
+            score, _ = evaluation(feature_comb, y)
+            df.loc[len(df)] = (model, combination,
+                               feature_comb.shape[1], score)
 
-    total_time = (datetime.now() - start)
-    print(f'{line_del}Calculations finished in {total_time}', end='')
+    total_time = str(datetime.now() - start)[:-7]
+    print(f'{line_del}Calculations finished in {total_time}')
 
     return df.sort_values('score', ascending=False)
