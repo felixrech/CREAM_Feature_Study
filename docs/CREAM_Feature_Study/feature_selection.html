@@ -48,18 +48,18 @@ line_del = &#39;&#39;.join(itertools.repeat(&#39;\r&#39;, 50))
 
 
 def normalize_features(features):
+    &#34;&#34;&#34;Use StandardScaler to standardize each feature in feature dictionary.
+    &#34;&#34;&#34;
     scaler = StandardScaler()
     for feature in features:
         features[feature] = scaler.fit_transform(features[feature])
-        # if features[feature].shape[1] == 1:
-        #     features[feature] = scaler.fit_transform(features[feature])
-        # else:
-        #     features[feature] -= np.mean(features[feature], axis=(0, 1))
-        #     features[feature] /= np.std(features[feature], axis=(0,1))
     return features
 
 
 def print_feature_info(features):
+    &#34;&#34;&#34;Print a table with feature name and dimension for features in features
+    dictionary.
+    &#34;&#34;&#34;
     print(f&#34;Total of {len(features)} features:\n&#34;)
     dims = [features[feature].shape[1] for feature in features]
     features = pd.DataFrame({&#39;name&#39;: list(features.keys()), &#39;dimension&#39;: dims})
@@ -67,6 +67,9 @@ def print_feature_info(features):
 
 
 def _evaluate_feature(X, y, metric, classifier, param_grid):
+    &#34;&#34;&#34;Evaluates a feature via GridSearchCV on param_grid, then calculating
+    the mean five-fold cross validation score with given metric.
+    &#34;&#34;&#34;
     cv = GridSearchCV(classifier, param_grid, n_jobs=-1)
     cv.fit(X, y)
     score = np.mean(cross_val_score(cv, X, y, scoring=metric, n_jobs=-1))
@@ -74,6 +77,8 @@ def _evaluate_feature(X, y, metric, classifier, param_grid):
 
 
 def _remove_features_by_dimension(features, dimension):
+    &#34;&#34;&#34;Removes features with dimension greater than given value from feature dictionary.
+    &#34;&#34;&#34;
     remove_list = []
     for feature in features:
         if features[feature].shape[1] &gt; dimension:
@@ -105,7 +110,6 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
     # Limit features to one-dimensional features if specified
     if limit_one_dimensional:
         # Copy features to not change the argument
-        # TODO: Check that this is enough
         features = _remove_features_by_dimension(copy.deepcopy(features), 1)
 
     # Only for first iteration
@@ -132,12 +136,17 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
                                    new_features, 0., None)
 
         # Calculate score for each entry of dataframe
-        for i in range(len(df)):
+        for i, _ in df.iterrows():
             print(f&#34;{line_del}Considering {df.loc[i, &#39;change_type&#39;]}&#34;
                   f&#34; {df.loc[i, &#39;change&#39;]}...&#34;, end=&#39;&#39;)
             feature_comb = np.hstack([features[f] for f in df.loc[i].features])
-            df.loc[i, &#39;score&#39;], df.loc[i, &#39;estimator&#39;] = feature_eval(
-                feature_comb, y)
+            score, estimator = feature_eval(feature_comb, y)
+            # Work around pandas interpreting the AdaBoostClassifier as a list
+            # of DecisionTrees (at least save hyperparameters to refit later)
+            if type(estimator) == AdaBoostClassifier:
+                df.loc[i, [&#39;score&#39;, &#39;estimator&#39;]] = score, str(estimator)
+            else:
+                df.loc[i, [&#39;score&#39;, &#39;estimator&#39;]] = score, estimator
 
         # Print overview
         df = df.sort_values(&#39;score&#39;, ascending=False)
@@ -150,10 +159,13 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
                   f&#34;{round(new_best.score, 3)}:\t{new_best.features}\n&#34;)
         else:
             print(&#34;No improvement, returning&#34;)
-            return df.iloc[0]
+            return best
 
 
 def get_evaluation(model, custom_params={}):
+    &#34;&#34;&#34;Returns a evaluation function partially evaluated with default
+    parameters for param_grid and metric, as well as given classifier type.
+    &#34;&#34;&#34;
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20, 2)}
@@ -179,19 +191,47 @@ def get_evaluation(model, custom_params={}):
 
 def simple_stepwise_regression(n_features, y, model, max=None, one_dim=False,
                                custom_params={}):
+    &#34;&#34;&#34;Ease-of use interface to the stepwise regression function.
+
+    Args:
+        n_features (dict): Dictionary of normalized features in form {&#39;name&#39;: np.ndarray, ...}.
+        y (numpy.ndarray): Array containing the true labels.
+        model (str): String with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).
+        max (int): Maximum number of features to use.
+        one_dim (bool): Whether to only use one-dimensional features.
+        custom_params (dict): Dictionary of additional parameters for grid search.
+
+    Returns:
+        pandas.core.series.Series: Best feature combination, has labels &#39;features&#39;, &#39;score&#39;, and &#39;estimator&#39; (already fitted).
+    &#34;&#34;&#34;
     evaluation = get_evaluation(model, custom_params)
     return stepwise_regression(n_features, y, evaluation, max, one_dim)
 
 
-def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#39;,
-                         models=[&#39;knn&#39;, &#39;svc&#39;, &#39;ridge&#39;, &#39;decision_tree&#39;]):
+def feature_combinations(normed_features, y,  num_features, metric=&#39;f1_macro&#39;,
+                         models=[&#39;knn&#39;, &#39;svc&#39;, &#39;ridge&#39;, &#39;decision_tree&#39;, &#39;adaboost&#39;]):
+    &#34;&#34;&#34;Evaluate all combinations of exactly num_features features.
 
-    df = pd.DataFrame(columns=[&#39;model&#39;, &#39;feature_combination&#39;, &#39;dimension&#39;,
-                               &#39;score&#39;])
-    # Generator empty after first model if not converted to list
+    Args:
+        normed_features (dict): Dictionary of normalized features in form {&#39;name&#39;: np.ndarray, ...}.
+        y (numpy.ndarray): Array containing the true labels.
+        num_features (int): Number of features to use.
+        metric (str): Metric to use.
+        models (list): List of string with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).
+
+    Returns:
+        pandas.DataFrame: DataFrame with columns &#39;model&#39;, &#39;feature_combination&#39;, &#39;dimension&#39;, &#39;score&#39; for each combination of model and features.
+    &#34;&#34;&#34;
+    df = pd.DataFrame(
+        columns=[&#39;model&#39;, &#39;feature_combination&#39;, &#39;dimension&#39;, &#39;score&#39;]
+    )
+    df[&#39;score&#39;] = df[&#39;score&#39;].astype(np.float)
+    df[&#39;dimension&#39;] = df[&#39;dimension&#39;].astype(np.int)
+
+    # Combination generator empty after first model if not converted to list
     feature_combs = list(itertools.combinations(normed_features.keys(),
-                                                n_features))
-    num_combs = int(scipy.special.comb(len(normed_features), n_features))
+                                                num_features))
+    num_combs = int(scipy.special.comb(len(normed_features), num_features))
     start = datetime.now()
 
     for j, model in enumerate(models):
@@ -199,20 +239,19 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 
         for i, combination in enumerate(feature_combs):
             now_num = j*num_combs + i + 1
-            remaining = (len(models)-(j+1)) * num_combs + num_combs - i
+            remaining = (len(models)-j) * num_combs - i
             time_remaining = (datetime.now() - start) / now_num * remaining
             print(f&#34;{line_del}Model {j+1}/{len(models)}, &#34;
                   f&#34;feature combination {i+1}/{num_combs}, &#34;
-                  f&#34;time remaining: {str(time_remaining)[:-7]}&#34;, end=&#39;&#39;)
+                  f&#34;total time remaining: {str(time_remaining)[:-7]}&#34;, end=&#39;&#39;)
 
-            X = np.empty((y.shape[0], 0))
-            for feature in combination:
-                X = np.hstack((X, normed_features[feature]))
-                score, _ = evaluation(X, y)
-                df.loc[now_num] = (model, combination, X.shape[1], score)
+            feature_comb = np.hstack([normed_features[f] for f in combination])
+            score, _ = evaluation(feature_comb, y)
+            df.loc[len(df)] = (model, combination,
+                               feature_comb.shape[1], score)
 
-    total_time = (datetime.now() - start)
-    print(f&#39;{line_del}Calculations finished in {total_time}&#39;, end=&#39;&#39;)
+    total_time = str(datetime.now() - start)[:-7]
+    print(f&#39;{line_del}Calculations finished in {total_time}&#39;)
 
     return df.sort_values(&#39;score&#39;, ascending=False)</code></pre>
 </details>
@@ -225,23 +264,56 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="CREAM_Feature_Study.feature_selection.feature_combinations"><code class="name flex">
-<span>def <span class="ident">feature_combinations</span></span>(<span>normed_features, y, n_features, metric='f1_macro', models=['knn', 'svc', 'ridge', 'decision_tree'])</span>
+<span>def <span class="ident">feature_combinations</span></span>(<span>normed_features, y, num_features, metric='f1_macro', models=['knn', 'svc', 'ridge', 'decision_tree', 'adaboost'])</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Evaluate all combinations of exactly num_features features.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>normed_features</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Dictionary of normalized features in form {'name': np.ndarray, &hellip;}.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>Array containing the true labels.</dd>
+<dt><strong><code>num_features</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of features to use.</dd>
+<dt><strong><code>metric</code></strong> :&ensp;<code>str</code></dt>
+<dd>Metric to use.</dd>
+<dt><strong><code>models</code></strong> :&ensp;<code>list</code></dt>
+<dd>List of string with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pandas.DataFrame</code></dt>
+<dd>DataFrame with columns 'model', 'feature_combination', 'dimension', 'score' for each combination of model and features.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#39;,
-                         models=[&#39;knn&#39;, &#39;svc&#39;, &#39;ridge&#39;, &#39;decision_tree&#39;]):
+<pre><code class="python">def feature_combinations(normed_features, y,  num_features, metric=&#39;f1_macro&#39;,
+                         models=[&#39;knn&#39;, &#39;svc&#39;, &#39;ridge&#39;, &#39;decision_tree&#39;, &#39;adaboost&#39;]):
+    &#34;&#34;&#34;Evaluate all combinations of exactly num_features features.
 
-    df = pd.DataFrame(columns=[&#39;model&#39;, &#39;feature_combination&#39;, &#39;dimension&#39;,
-                               &#39;score&#39;])
-    # Generator empty after first model if not converted to list
+    Args:
+        normed_features (dict): Dictionary of normalized features in form {&#39;name&#39;: np.ndarray, ...}.
+        y (numpy.ndarray): Array containing the true labels.
+        num_features (int): Number of features to use.
+        metric (str): Metric to use.
+        models (list): List of string with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).
+
+    Returns:
+        pandas.DataFrame: DataFrame with columns &#39;model&#39;, &#39;feature_combination&#39;, &#39;dimension&#39;, &#39;score&#39; for each combination of model and features.
+    &#34;&#34;&#34;
+    df = pd.DataFrame(
+        columns=[&#39;model&#39;, &#39;feature_combination&#39;, &#39;dimension&#39;, &#39;score&#39;]
+    )
+    df[&#39;score&#39;] = df[&#39;score&#39;].astype(np.float)
+    df[&#39;dimension&#39;] = df[&#39;dimension&#39;].astype(np.int)
+
+    # Combination generator empty after first model if not converted to list
     feature_combs = list(itertools.combinations(normed_features.keys(),
-                                                n_features))
-    num_combs = int(scipy.special.comb(len(normed_features), n_features))
+                                                num_features))
+    num_combs = int(scipy.special.comb(len(normed_features), num_features))
     start = datetime.now()
 
     for j, model in enumerate(models):
@@ -249,20 +321,19 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 
         for i, combination in enumerate(feature_combs):
             now_num = j*num_combs + i + 1
-            remaining = (len(models)-(j+1)) * num_combs + num_combs - i
+            remaining = (len(models)-j) * num_combs - i
             time_remaining = (datetime.now() - start) / now_num * remaining
             print(f&#34;{line_del}Model {j+1}/{len(models)}, &#34;
                   f&#34;feature combination {i+1}/{num_combs}, &#34;
-                  f&#34;time remaining: {str(time_remaining)[:-7]}&#34;, end=&#39;&#39;)
+                  f&#34;total time remaining: {str(time_remaining)[:-7]}&#34;, end=&#39;&#39;)
 
-            X = np.empty((y.shape[0], 0))
-            for feature in combination:
-                X = np.hstack((X, normed_features[feature]))
-                score, _ = evaluation(X, y)
-                df.loc[now_num] = (model, combination, X.shape[1], score)
+            feature_comb = np.hstack([normed_features[f] for f in combination])
+            score, _ = evaluation(feature_comb, y)
+            df.loc[len(df)] = (model, combination,
+                               feature_comb.shape[1], score)
 
-    total_time = (datetime.now() - start)
-    print(f&#39;{line_del}Calculations finished in {total_time}&#39;, end=&#39;&#39;)
+    total_time = str(datetime.now() - start)[:-7]
+    print(f&#39;{line_del}Calculations finished in {total_time}&#39;)
 
     return df.sort_values(&#39;score&#39;, ascending=False)</code></pre>
 </details>
@@ -271,12 +342,16 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <span>def <span class="ident">get_evaluation</span></span>(<span>model, custom_params={})</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns a evaluation function partially evaluated with default
+parameters for param_grid and metric, as well as given classifier type.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_evaluation(model, custom_params={}):
+    &#34;&#34;&#34;Returns a evaluation function partially evaluated with default
+    parameters for param_grid and metric, as well as given classifier type.
+    &#34;&#34;&#34;
     if model == &#39;knn&#39;:
         classifier = KNeighborsClassifier(n_jobs=-1)
         param_grid = {&#39;n_neighbors&#39;: np.arange(1, 20, 2)}
@@ -304,20 +379,17 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <span>def <span class="ident">normalize_features</span></span>(<span>features)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Use StandardScaler to standardize each feature in feature dictionary.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def normalize_features(features):
+    &#34;&#34;&#34;Use StandardScaler to standardize each feature in feature dictionary.
+    &#34;&#34;&#34;
     scaler = StandardScaler()
     for feature in features:
         features[feature] = scaler.fit_transform(features[feature])
-        # if features[feature].shape[1] == 1:
-        #     features[feature] = scaler.fit_transform(features[feature])
-        # else:
-        #     features[feature] -= np.mean(features[feature], axis=(0, 1))
-        #     features[feature] /= np.std(features[feature], axis=(0,1))
     return features</code></pre>
 </details>
 </dd>
@@ -325,12 +397,16 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <span>def <span class="ident">print_feature_info</span></span>(<span>features)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Print a table with feature name and dimension for features in features
+dictionary.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def print_feature_info(features):
+    &#34;&#34;&#34;Print a table with feature name and dimension for features in features
+    dictionary.
+    &#34;&#34;&#34;
     print(f&#34;Total of {len(features)} features:\n&#34;)
     dims = [features[feature].shape[1] for feature in features]
     features = pd.DataFrame({&#39;name&#39;: list(features.keys()), &#39;dimension&#39;: dims})
@@ -341,13 +417,46 @@ def feature_combinations(normed_features, y,  n_features, metric=&#39;f1_macro&#
 <span>def <span class="ident">simple_stepwise_regression</span></span>(<span>n_features, y, model, max=None, one_dim=False, custom_params={})</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Ease-of use interface to the stepwise regression function.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>n_features</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Dictionary of normalized features in form {'name': np.ndarray, &hellip;}.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>Array containing the true labels.</dd>
+<dt><strong><code>model</code></strong> :&ensp;<code>str</code></dt>
+<dd>String with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).</dd>
+<dt><strong><code>max</code></strong> :&ensp;<code>int</code></dt>
+<dd>Maximum number of features to use.</dd>
+<dt><strong><code>one_dim</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Whether to only use one-dimensional features.</dd>
+<dt><strong><code>custom_params</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Dictionary of additional parameters for grid search.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pandas.core.series.Series</code></dt>
+<dd>Best feature combination, has labels 'features', 'score', and 'estimator' (already fitted).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def simple_stepwise_regression(n_features, y, model, max=None, one_dim=False,
                                custom_params={}):
+    &#34;&#34;&#34;Ease-of use interface to the stepwise regression function.
+
+    Args:
+        n_features (dict): Dictionary of normalized features in form {&#39;name&#39;: np.ndarray, ...}.
+        y (numpy.ndarray): Array containing the true labels.
+        model (str): String with the classifier to use (knn, svc, ridge, decision_tree, or adaboost).
+        max (int): Maximum number of features to use.
+        one_dim (bool): Whether to only use one-dimensional features.
+        custom_params (dict): Dictionary of additional parameters for grid search.
+
+    Returns:
+        pandas.core.series.Series: Best feature combination, has labels &#39;features&#39;, &#39;score&#39;, and &#39;estimator&#39; (already fitted).
+    &#34;&#34;&#34;
     evaluation = get_evaluation(model, custom_params)
     return stepwise_regression(n_features, y, evaluation, max, one_dim)</code></pre>
 </details>
@@ -402,7 +511,6 @@ combination for given classifier.</p>
     # Limit features to one-dimensional features if specified
     if limit_one_dimensional:
         # Copy features to not change the argument
-        # TODO: Check that this is enough
         features = _remove_features_by_dimension(copy.deepcopy(features), 1)
 
     # Only for first iteration
@@ -429,12 +537,17 @@ combination for given classifier.</p>
                                    new_features, 0., None)
 
         # Calculate score for each entry of dataframe
-        for i in range(len(df)):
+        for i, _ in df.iterrows():
             print(f&#34;{line_del}Considering {df.loc[i, &#39;change_type&#39;]}&#34;
                   f&#34; {df.loc[i, &#39;change&#39;]}...&#34;, end=&#39;&#39;)
             feature_comb = np.hstack([features[f] for f in df.loc[i].features])
-            df.loc[i, &#39;score&#39;], df.loc[i, &#39;estimator&#39;] = feature_eval(
-                feature_comb, y)
+            score, estimator = feature_eval(feature_comb, y)
+            # Work around pandas interpreting the AdaBoostClassifier as a list
+            # of DecisionTrees (at least save hyperparameters to refit later)
+            if type(estimator) == AdaBoostClassifier:
+                df.loc[i, [&#39;score&#39;, &#39;estimator&#39;]] = score, str(estimator)
+            else:
+                df.loc[i, [&#39;score&#39;, &#39;estimator&#39;]] = score, estimator
 
         # Print overview
         df = df.sort_values(&#39;score&#39;, ascending=False)
@@ -447,7 +560,7 @@ combination for given classifier.</p>
                   f&#34;{round(new_best.score, 3)}:\t{new_best.features}\n&#34;)
         else:
             print(&#34;No improvement, returning&#34;)
-            return df.iloc[0]</code></pre>
+            return best</code></pre>
 </details>
 </dd>
 </dl>

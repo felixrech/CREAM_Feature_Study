@@ -79,16 +79,16 @@ def get_all_features(voltage, current):
         "High frequency spectral flatness (quadratic-type filter)": spectral.high_frequency_spectral_flatness(spec, 'quadratic'),
         "High frequency spectral mean (quadratic-type filter)": spectral.high_frequency_spectral_mean(spec, 'quadratic'),
         "(High frequency) Spectral mean (no high pass filter)": spectral.high_frequency_spectral_mean(spec, 'none'),
-        "Wavelet decomposition details coefficients (max level, current)": wavelet.details_coefficients(current),
-        "Wavelet decomposition (1st level) energy (current)": wavelet.first_level_energy(current),
-        "Wavelet decomposition (all levels) energy (current)": wavelet.all_decomposition_levels_energy(current),
-        "Wavelet decomposition dominant scale (current)": wavelet.dominant_scale(current),
-        "Wavelet decomposition energy over time (current)": wavelet.energy_over_time(current),
-        "Wavelet decomposition details coefficients (max level, voltage)": wavelet.details_coefficients(voltage),
-        "Wavelet decomposition (1st level) energy (voltage)": wavelet.first_level_energy(voltage),
-        "Wavelet decomposition (all levels) energy (voltage)": wavelet.all_decomposition_levels_energy(voltage),
-        "Wavelet decomposition dominant scale (voltage)": wavelet.dominant_scale(voltage),
-        "Wavelet decomposition energy over time (voltage)": wavelet.energy_over_time(voltage)
+        "Wavelet transform details coefficients (max level, current)": wavelet.details_coefficients(current),
+        "Wavelet transform (1st level) energy (current)": wavelet.first_level_energy(current),
+        "Wavelet transform (all levels) energy (current)": wavelet.all_transform_levels_energy(current),
+        "Wavelet transform dominant scale (current)": wavelet.dominant_scale(current),
+        "Wavelet transform energy over time (current)": wavelet.energy_over_time(current),
+        "Wavelet transform details coefficients (max level, voltage)": wavelet.details_coefficients(voltage),
+        "Wavelet transform (1st level) energy (voltage)": wavelet.first_level_energy(voltage),
+        "Wavelet transform (all levels) energy (voltage)": wavelet.all_transform_levels_energy(voltage),
+        "Wavelet transform dominant scale (voltage)": wavelet.dominant_scale(voltage),
+        "Wavelet transform energy over time (voltage)": wavelet.energy_over_time(voltage)
     }
 
 
@@ -142,16 +142,16 @@ def get_feature_type(feature):
         "High frequency spectral flatness (quadratic-type filter)": 'spectral',
         "High frequency spectral mean (quadratic-type filter)": 'spectral',
         "(High frequency) Spectral mean (no high pass filter)": 'spectral',
-        "Wavelet decomposition details coefficients (max level, current)": 'wavelet',
-        "Wavelet decomposition (1st level) energy (current)": 'wavelet',
-        "Wavelet decomposition (all levels) energy (current)": 'wavelet',
-        "Wavelet decomposition dominant scale (current)": 'wavelet',
-        "Wavelet decomposition energy over time (current)": 'wavelet',
-        "Wavelet decomposition details coefficients (max level, voltage)": 'wavelet',
-        "Wavelet decomposition (1st level) energy (voltage)": 'wavelet',
-        "Wavelet decomposition (all levels) energy (voltage)": 'wavelet',
-        "Wavelet decomposition dominant scale (voltage)": 'wavelet',
-        "Wavelet decomposition energy over time (voltage)": 'wavelet'
+        "Wavelet transform details coefficients (max level, current)": 'wavelet',
+        "Wavelet transform (1st level) energy (current)": 'wavelet',
+        "Wavelet transform (all levels) energy (current)": 'wavelet',
+        "Wavelet transform dominant scale (current)": 'wavelet',
+        "Wavelet transform energy over time (current)": 'wavelet',
+        "Wavelet transform details coefficients (max level, voltage)": 'wavelet',
+        "Wavelet transform (1st level) energy (voltage)": 'wavelet',
+        "Wavelet transform (all levels) energy (voltage)": 'wavelet',
+        "Wavelet transform dominant scale (voltage)": 'wavelet',
+        "Wavelet transform energy over time (voltage)": 'wavelet'
     }
     return feature_types[feature]
 

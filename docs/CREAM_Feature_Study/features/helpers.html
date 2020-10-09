@@ -51,6 +51,8 @@ PERIOD_LENGTH = 128
 ##############################################################################
 
 def get_all_features(voltage, current):
+    &#34;&#34;&#34;Creates a dictionary with all features.
+    &#34;&#34;&#34;
     # Import here to avoid circular import
     from features import vi, spectral, wavelet
 
@@ -105,20 +107,95 @@ def get_all_features(voltage, current):
         &#34;High frequency spectral flatness (quadratic-type filter)&#34;: spectral.high_frequency_spectral_flatness(spec, &#39;quadratic&#39;),
         &#34;High frequency spectral mean (quadratic-type filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;quadratic&#39;),
         &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;),
-        &#34;Wavelet decomposition details coefficients (max level, current)&#34;: wavelet.details_coefficients(current),
-        &#34;Wavelet decomposition (1st level) energy (current)&#34;: wavelet.first_level_energy(current),
-        &#34;Wavelet decomposition (all levels) energy (current)&#34;: wavelet.all_decomposition_levels_energy(current),
-        &#34;Wavelet decomposition dominant scale (current)&#34;: wavelet.dominant_scale(current),
-        &#34;Wavelet decomposition energy of time (current)&#34;: wavelet.energy_over_time(current),
-        &#34;Wavelet decomposition details coefficients (max level, voltage)&#34;: wavelet.details_coefficients(voltage),
-        &#34;Wavelet decomposition (1st level) energy (voltage)&#34;: wavelet.first_level_energy(voltage),
-        &#34;Wavelet decomposition (all levels) energy (voltage)&#34;: wavelet.all_decomposition_levels_energy(voltage),
-        &#34;Wavelet decomposition dominant scale (voltage)&#34;: wavelet.dominant_scale(voltage),
-        &#34;Wavelet decomposition energy of time (voltage)&#34;: wavelet.energy_over_time(voltage)
+        &#34;Wavelet transform details coefficients (max level, current)&#34;: wavelet.details_coefficients(current),
+        &#34;Wavelet transform (1st level) energy (current)&#34;: wavelet.first_level_energy(current),
+        &#34;Wavelet transform (all levels) energy (current)&#34;: wavelet.all_transform_levels_energy(current),
+        &#34;Wavelet transform dominant scale (current)&#34;: wavelet.dominant_scale(current),
+        &#34;Wavelet transform energy over time (current)&#34;: wavelet.energy_over_time(current),
+        &#34;Wavelet transform details coefficients (max level, voltage)&#34;: wavelet.details_coefficients(voltage),
+        &#34;Wavelet transform (1st level) energy (voltage)&#34;: wavelet.first_level_energy(voltage),
+        &#34;Wavelet transform (all levels) energy (voltage)&#34;: wavelet.all_transform_levels_energy(voltage),
+        &#34;Wavelet transform dominant scale (voltage)&#34;: wavelet.dominant_scale(voltage),
+        &#34;Wavelet transform energy over time (voltage)&#34;: wavelet.energy_over_time(voltage)
     }
 
 
+def get_feature_type(feature):
+    &#34;&#34;&#34;Returns the feature type for given feature.
+    &#34;&#34;&#34;
+    feature_types = {
+        &#34;Active power&#34;: &#39;electrical&#39;,
+        &#34;Reactive power&#34;: &#39;electrical&#39;,
+        &#34;Apparent power&#34;: &#39;electrical&#39;,
+        &#34;Phase shift&#34;: &#39;electrical&#39;,
+        &#34;VI Trajectory&#34;: &#39;electrical&#39;,
+        &#34;Harmonics (first 20)&#34;: &#39;spectral&#39;,
+        &#34;Harmonics energy distribution&#34;: &#39;spectral&#39;,
+        &#34;Spectral flatness&#34;: &#39;spectral&#39;,
+        &#34;Odd even harmonics ratio&#34;: &#39;spectral&#39;,
+        &#34;Tristimulus&#34;: &#39;spectral&#39;,
+        &#34;Form factor&#34;: &#39;electrical&#39;,
+        &#34;Crest factor&#34;: &#39;electrical&#39;,
+        &#34;Total harmonic distortion&#34;: &#39;spectral&#39;,
+        &#34;Resistance (mean)&#34;: &#39;electrical&#39;,
+        &#34;Resistance (median)&#34;: &#39;electrical&#39;,
+        &#34;Admittance (mean)&#34;: &#39;electrical&#39;,
+        &#34;Admittance (median)&#34;: &#39;electrical&#39;,
+        &#34;Log attack time&#34;: &#39;electrical&#39;,
+        &#34;Temporal centroid&#34;: &#39;electrical&#39;,
+        &#34;Spectral centroid&#34;: &#39;spectral&#39;,
+        &#34;Harmonic spectral centroid&#34;: &#39;spectral&#39;,
+        &#34;Signal to signal mean ratio&#34;: &#39;spectral&#39;,
+        &#34;Inrush current ratio&#34;: &#39;electrical&#39;,
+        &#34;Positive-negative half cycle ratio&#34;: &#39;electrical&#39;,
+        &#34;Max-min ratio&#34;: &#39;electrical&#39;,
+        &#34;Peak-mean ratio&#34;: &#39;electrical&#39;,
+        &#34;Max inrush ratio&#34;: &#39;electrical&#39;,
+        &#34;Mean variance ratio&#34;: &#39;electrical&#39;,
+        &#34;Waveform distortion&#34;: &#39;electrical&#39;,
+        &#34;Waveform approximation&#34;: &#39;electrical&#39;,
+        &#34;Current over time&#34;: &#39;electrical&#39;,
+        &#34;Admittance over time&#34;: &#39;electrical&#39;,
+        &#34;Periods to steady state&#34;: &#39;electrical&#39;,
+        &#34;2nd harmonic&#34;: &#39;spectral&#39;,
+        &#34;Transient steady states ratio&#34;: &#39;electrical&#39;,
+        &#34;Current RMS&#34;: &#39;electrical&#39;,
+        &#34;High frequency spectral centroid (zero-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral flatness (zero-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral mean (zero-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral centroid (linear-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral flatness (linear-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral mean (linear-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral centroid (quadratic-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral flatness (quadratic-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral mean (quadratic-type filter)&#34;: &#39;spectral&#39;,
+        &#34;(High frequency) Spectral mean (no high pass filter)&#34;: &#39;spectral&#39;,
+        &#34;Wavelet transform details coefficients (max level, current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (1st level) energy (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (all levels) energy (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform dominant scale (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform energy over time (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform details coefficients (max level, voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (1st level) energy (voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (all levels) energy (voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform dominant scale (voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform energy over time (voltage)&#34;: &#39;wavelet&#39;
+    }
+    return feature_types[feature]
+
+
 def feature_boxplot(title, X, y, out=True):
+    &#34;&#34;&#34;Creates a boxplot for given feature.
+
+    Can handle multi-dimensional features by creating boxplot for each
+    dimension.
+
+    Args:
+        title (str): Title for the plot.
+        X (numpy.ndarray): (n_samples, feature_dim)-dimensional array containing the feature.
+        y (numpy.ndarray): (n_samples, )-dimensional array containing the true labels.
+        out (bool): Whether to show outliers.
+    &#34;&#34;&#34;
     # Set up grid size
     x_dim = int(np.ceil(X.shape[1] / 5))
     y_dim = X.shape[1] if X.shape[1] &lt;= 5 else 5
@@ -138,6 +215,14 @@ def feature_boxplot(title, X, y, out=True):
 
 
 def feature_evaluation(X, y, output=True, confusion=False):
+    &#34;&#34;&#34;Evaluates the given feature using a kNN classifier.
+
+    Args:
+        X (numpy.ndarray): (n_samples, feature_dim)-dimensional array containing the feature.
+        y (numpy.ndarray): (n_samples, )-dimensional array containing the true labels.
+        output (bool): Whether to print result to stdout.
+        confusion (bool): Whether to plot the confusion matrix.
+    &#34;&#34;&#34;
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
@@ -190,12 +275,16 @@ def geo_mean(x):
 
 
 def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
+    &#34;&#34;&#34;Average the first n_periods of array.
+    &#34;&#34;&#34;
     X = X[:, : n_periods * period_length]
     X = X.reshape(X.shape[0], n_periods, period_length)
     return np.mean(X, axis=1)
 
 
 def normalize(X, method=&#39;max&#39;):
+    &#34;&#34;&#34;Normalize given vector array.
+    &#34;&#34;&#34;
     if method == &#39;max&#39;:
         return X / np.max(np.abs(X), axis=1).reshape(-1, 1)
     raise ValueError(&#34;Chosen method type does not exist, &#34;
@@ -203,6 +292,8 @@ def normalize(X, method=&#39;max&#39;):
 
 
 def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
+    &#34;&#34;&#34;Apply a function to each of the first n_periods periods of array.
+    &#34;&#34;&#34;
     X = X[:, : n_periods * period_length]
     X = X.reshape(X.shape[0], n_periods, period_length)
     return np.apply_along_axis(func, 2, X, args)</code></pre>
@@ -219,12 +310,14 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <span>def <span class="ident">apply_to_periods</span></span>(<span>X, func, n_periods, args, period_length=128)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Apply a function to each of the first n_periods periods of array.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
+    &#34;&#34;&#34;Apply a function to each of the first n_periods periods of array.
+    &#34;&#34;&#34;
     X = X[:, : n_periods * period_length]
     X = X.reshape(X.shape[0], n_periods, period_length)
     return np.apply_along_axis(func, 2, X, args)</code></pre>
@@ -234,12 +327,14 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <span>def <span class="ident">average_periods</span></span>(<span>X, n_periods, period_length=128)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Average the first n_periods of array.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def average_periods(X, n_periods, period_length=PERIOD_LENGTH):
+    &#34;&#34;&#34;Average the first n_periods of array.
+    &#34;&#34;&#34;
     X = X[:, : n_periods * period_length]
     X = X.reshape(X.shape[0], n_periods, period_length)
     return np.mean(X, axis=1)</code></pre>
@@ -249,12 +344,36 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <span>def <span class="ident">feature_boxplot</span></span>(<span>title, X, y, out=True)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Creates a boxplot for given feature.</p>
+<p>Can handle multi-dimensional features by creating boxplot for each
+dimension.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>title</code></strong> :&ensp;<code>str</code></dt>
+<dd>Title for the plot.</dd>
+<dt><strong><code>X</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>(n_samples, feature_dim)-dimensional array containing the feature.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>(n_samples, )-dimensional array containing the true labels.</dd>
+<dt><strong><code>out</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Whether to show outliers.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def feature_boxplot(title, X, y, out=True):
+    &#34;&#34;&#34;Creates a boxplot for given feature.
+
+    Can handle multi-dimensional features by creating boxplot for each
+    dimension.
+
+    Args:
+        title (str): Title for the plot.
+        X (numpy.ndarray): (n_samples, feature_dim)-dimensional array containing the feature.
+        y (numpy.ndarray): (n_samples, )-dimensional array containing the true labels.
+        out (bool): Whether to show outliers.
+    &#34;&#34;&#34;
     # Set up grid size
     x_dim = int(np.ceil(X.shape[1] / 5))
     y_dim = X.shape[1] if X.shape[1] &lt;= 5 else 5
@@ -277,12 +396,31 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <span>def <span class="ident">feature_evaluation</span></span>(<span>X, y, output=True, confusion=False)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Evaluates the given feature using a kNN classifier.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>(n_samples, feature_dim)-dimensional array containing the feature.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
+<dd>(n_samples, )-dimensional array containing the true labels.</dd>
+<dt><strong><code>output</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Whether to print result to stdout.</dd>
+<dt><strong><code>confusion</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Whether to plot the confusion matrix.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def feature_evaluation(X, y, output=True, confusion=False):
+    &#34;&#34;&#34;Evaluates the given feature using a kNN classifier.
+
+    Args:
+        X (numpy.ndarray): (n_samples, feature_dim)-dimensional array containing the feature.
+        y (numpy.ndarray): (n_samples, )-dimensional array containing the true labels.
+        output (bool): Whether to print result to stdout.
+        confusion (bool): Whether to plot the confusion matrix.
+    &#34;&#34;&#34;
     # Standardize feature
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
@@ -332,12 +470,14 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <span>def <span class="ident">get_all_features</span></span>(<span>voltage, current)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Creates a dictionary with all features.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_all_features(voltage, current):
+    &#34;&#34;&#34;Creates a dictionary with all features.
+    &#34;&#34;&#34;
     # Import here to avoid circular import
     from features import vi, spectral, wavelet
 
@@ -392,29 +532,104 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
         &#34;High frequency spectral flatness (quadratic-type filter)&#34;: spectral.high_frequency_spectral_flatness(spec, &#39;quadratic&#39;),
         &#34;High frequency spectral mean (quadratic-type filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;quadratic&#39;),
         &#34;(High frequency) Spectral mean (no high pass filter)&#34;: spectral.high_frequency_spectral_mean(spec, &#39;none&#39;),
-        &#34;Wavelet decomposition details coefficients (max level, current)&#34;: wavelet.details_coefficients(current),
-        &#34;Wavelet decomposition (1st level) energy (current)&#34;: wavelet.first_level_energy(current),
-        &#34;Wavelet decomposition (all levels) energy (current)&#34;: wavelet.all_decomposition_levels_energy(current),
-        &#34;Wavelet decomposition dominant scale (current)&#34;: wavelet.dominant_scale(current),
-        &#34;Wavelet decomposition energy of time (current)&#34;: wavelet.energy_over_time(current),
-        &#34;Wavelet decomposition details coefficients (max level, voltage)&#34;: wavelet.details_coefficients(voltage),
-        &#34;Wavelet decomposition (1st level) energy (voltage)&#34;: wavelet.first_level_energy(voltage),
-        &#34;Wavelet decomposition (all levels) energy (voltage)&#34;: wavelet.all_decomposition_levels_energy(voltage),
-        &#34;Wavelet decomposition dominant scale (voltage)&#34;: wavelet.dominant_scale(voltage),
-        &#34;Wavelet decomposition energy of time (voltage)&#34;: wavelet.energy_over_time(voltage)
+        &#34;Wavelet transform details coefficients (max level, current)&#34;: wavelet.details_coefficients(current),
+        &#34;Wavelet transform (1st level) energy (current)&#34;: wavelet.first_level_energy(current),
+        &#34;Wavelet transform (all levels) energy (current)&#34;: wavelet.all_transform_levels_energy(current),
+        &#34;Wavelet transform dominant scale (current)&#34;: wavelet.dominant_scale(current),
+        &#34;Wavelet transform energy over time (current)&#34;: wavelet.energy_over_time(current),
+        &#34;Wavelet transform details coefficients (max level, voltage)&#34;: wavelet.details_coefficients(voltage),
+        &#34;Wavelet transform (1st level) energy (voltage)&#34;: wavelet.first_level_energy(voltage),
+        &#34;Wavelet transform (all levels) energy (voltage)&#34;: wavelet.all_transform_levels_energy(voltage),
+        &#34;Wavelet transform dominant scale (voltage)&#34;: wavelet.dominant_scale(voltage),
+        &#34;Wavelet transform energy over time (voltage)&#34;: wavelet.energy_over_time(voltage)
     }</code></pre>
+</details>
+</dd>
+<dt id="CREAM_Feature_Study.features.helpers.get_feature_type"><code class="name flex">
+<span>def <span class="ident">get_feature_type</span></span>(<span>feature)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the feature type for given feature.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_feature_type(feature):
+    &#34;&#34;&#34;Returns the feature type for given feature.
+    &#34;&#34;&#34;
+    feature_types = {
+        &#34;Active power&#34;: &#39;electrical&#39;,
+        &#34;Reactive power&#34;: &#39;electrical&#39;,
+        &#34;Apparent power&#34;: &#39;electrical&#39;,
+        &#34;Phase shift&#34;: &#39;electrical&#39;,
+        &#34;VI Trajectory&#34;: &#39;electrical&#39;,
+        &#34;Harmonics (first 20)&#34;: &#39;spectral&#39;,
+        &#34;Harmonics energy distribution&#34;: &#39;spectral&#39;,
+        &#34;Spectral flatness&#34;: &#39;spectral&#39;,
+        &#34;Odd even harmonics ratio&#34;: &#39;spectral&#39;,
+        &#34;Tristimulus&#34;: &#39;spectral&#39;,
+        &#34;Form factor&#34;: &#39;electrical&#39;,
+        &#34;Crest factor&#34;: &#39;electrical&#39;,
+        &#34;Total harmonic distortion&#34;: &#39;spectral&#39;,
+        &#34;Resistance (mean)&#34;: &#39;electrical&#39;,
+        &#34;Resistance (median)&#34;: &#39;electrical&#39;,
+        &#34;Admittance (mean)&#34;: &#39;electrical&#39;,
+        &#34;Admittance (median)&#34;: &#39;electrical&#39;,
+        &#34;Log attack time&#34;: &#39;electrical&#39;,
+        &#34;Temporal centroid&#34;: &#39;electrical&#39;,
+        &#34;Spectral centroid&#34;: &#39;spectral&#39;,
+        &#34;Harmonic spectral centroid&#34;: &#39;spectral&#39;,
+        &#34;Signal to signal mean ratio&#34;: &#39;spectral&#39;,
+        &#34;Inrush current ratio&#34;: &#39;electrical&#39;,
+        &#34;Positive-negative half cycle ratio&#34;: &#39;electrical&#39;,
+        &#34;Max-min ratio&#34;: &#39;electrical&#39;,
+        &#34;Peak-mean ratio&#34;: &#39;electrical&#39;,
+        &#34;Max inrush ratio&#34;: &#39;electrical&#39;,
+        &#34;Mean variance ratio&#34;: &#39;electrical&#39;,
+        &#34;Waveform distortion&#34;: &#39;electrical&#39;,
+        &#34;Waveform approximation&#34;: &#39;electrical&#39;,
+        &#34;Current over time&#34;: &#39;electrical&#39;,
+        &#34;Admittance over time&#34;: &#39;electrical&#39;,
+        &#34;Periods to steady state&#34;: &#39;electrical&#39;,
+        &#34;2nd harmonic&#34;: &#39;spectral&#39;,
+        &#34;Transient steady states ratio&#34;: &#39;electrical&#39;,
+        &#34;Current RMS&#34;: &#39;electrical&#39;,
+        &#34;High frequency spectral centroid (zero-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral flatness (zero-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral mean (zero-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral centroid (linear-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral flatness (linear-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral mean (linear-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral centroid (quadratic-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral flatness (quadratic-type filter)&#34;: &#39;spectral&#39;,
+        &#34;High frequency spectral mean (quadratic-type filter)&#34;: &#39;spectral&#39;,
+        &#34;(High frequency) Spectral mean (no high pass filter)&#34;: &#39;spectral&#39;,
+        &#34;Wavelet transform details coefficients (max level, current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (1st level) energy (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (all levels) energy (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform dominant scale (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform energy over time (current)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform details coefficients (max level, voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (1st level) energy (voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform (all levels) energy (voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform dominant scale (voltage)&#34;: &#39;wavelet&#39;,
+        &#34;Wavelet transform energy over time (voltage)&#34;: &#39;wavelet&#39;
+    }
+    return feature_types[feature]</code></pre>
 </details>
 </dd>
 <dt id="CREAM_Feature_Study.features.helpers.normalize"><code class="name flex">
 <span>def <span class="ident">normalize</span></span>(<span>X, method='max')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Normalize given vector array.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def normalize(X, method=&#39;max&#39;):
+    &#34;&#34;&#34;Normalize given vector array.
+    &#34;&#34;&#34;
     if method == &#39;max&#39;:
         return X / np.max(np.abs(X), axis=1).reshape(-1, 1)
     raise ValueError(&#34;Chosen method type does not exist, &#34;
@@ -463,6 +678,7 @@ def apply_to_periods(X, func, n_periods, args, period_length=PERIOD_LENGTH):
 <li><code><a title="CREAM_Feature_Study.features.helpers.feature_evaluation" href="#CREAM_Feature_Study.features.helpers.feature_evaluation">feature_evaluation</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.geo_mean" href="#CREAM_Feature_Study.features.helpers.geo_mean">geo_mean</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.get_all_features" href="#CREAM_Feature_Study.features.helpers.get_all_features">get_all_features</a></code></li>
+<li><code><a title="CREAM_Feature_Study.features.helpers.get_feature_type" href="#CREAM_Feature_Study.features.helpers.get_feature_type">get_feature_type</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.normalize" href="#CREAM_Feature_Study.features.helpers.normalize">normalize</a></code></li>
 <li><code><a title="CREAM_Feature_Study.features.helpers.rms" href="#CREAM_Feature_Study.features.helpers.rms">rms</a></code></li>
 </ul>
