@@ -50,6 +50,7 @@ line_del = &#39;&#39;.join(itertools.repeat(&#39;\r&#39;, 50))
 def normalize_features(features):
     &#34;&#34;&#34;Use StandardScaler to standardize each feature in feature dictionary.
     &#34;&#34;&#34;
+    features = copy.deepcopy(features)  # Don&#39;t change argument
     scaler = StandardScaler()
     for feature in features:
         features[feature] = scaler.fit_transform(features[feature])
@@ -387,6 +388,7 @@ parameters for param_grid and metric, as well as given classifier type.</p></div
 <pre><code class="python">def normalize_features(features):
     &#34;&#34;&#34;Use StandardScaler to standardize each feature in feature dictionary.
     &#34;&#34;&#34;
+    features = copy.deepcopy(features)  # Don&#39;t change argument
     scaler = StandardScaler()
     for feature in features:
         features[feature] = scaler.fit_transform(features[feature])

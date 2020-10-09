@@ -23,6 +23,7 @@ line_del = ''.join(itertools.repeat('\r', 50))
 def normalize_features(features):
     """Use StandardScaler to standardize each feature in feature dictionary.
     """
+    features = copy.deepcopy(features)  # Don't change argument
     scaler = StandardScaler()
     for feature in features:
         features[feature] = scaler.fit_transform(features[feature])
