@@ -80,7 +80,7 @@ def reactive_power(voltage, current, phase_shift=None, period_length=PERIOD_LENG
         phase_shift = phase_shift(voltage, current,
                                   period_length=period_length)
 
-    return rms(voltage) * rms(current) * np.sin(phase_shift)
+    return np.abs(rms(voltage) * rms(current) * np.sin(phase_shift))
 
 
 def apparent_power(voltage, current):

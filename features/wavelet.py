@@ -11,11 +11,11 @@ DEFAULT_WAVELET = 'haar'
 
 def details_coefficients(signal, level='max', wavelet=DEFAULT_WAVELET):
     """Calculates the details coefficients \\(c_D\\) of the given level
-    wavelet decomposition.
+    wavelet transform.
 
     Args:
         signal (numpy.ndarray): (n_samples, window_size)-dimensional numpy array.
-        level (int): Level of wavelet decomposition, defaults to maximum possible.
+        level (int): Level of wavelet transform, defaults to maximum possible.
         wavelet (str): Wavelet to use, defaults to haar (db1).
 
     Returns:
@@ -30,22 +30,22 @@ def details_coefficients(signal, level='max', wavelet=DEFAULT_WAVELET):
 
 
 def energy(signal, levels=None, wavelet=DEFAULT_WAVELET):
-    """Calculates the energy of the wavelet decomposition for each level.
+    """Calculates the energy of the wavelet transform for each level.
 
     Let \\(c_D\\) be the array of details coefficient of a(ny) level of a
-    wavelet decomposition. The energy of that level is then defined as:
+    wavelet transform. The energy of that level is then defined as:
 
     \\[E(c_D) = \\sum_n (c_D[n])^2\\]
 
     Args:
         signal (numpy.ndarray): (n_samples, window_size)-dimensional numpy array.
-        levels (list): List of decomposition levels, defaults to all possible.
+        levels (list): List of transform levels, defaults to all possible.
         wavelet (str): Wavelet to use, defaults to haar (db1).
 
     Returns:
-        numpy.ndarray: Energy of (details of) each decomposition level as a (n_samples, n_levels)-dimensional array.
+        numpy.ndarray: Energy of (details of) each transform level as a (n_samples, n_levels)-dimensional array.
     """
-    # Default to all decomposition levels possible for given signal
+    # Default to all transform levels possible for given signal
     if levels is None:
         levels = list(range(1, pywt.dwt_max_level(signal.shape[1], wavelet)+1))
 
@@ -60,7 +60,7 @@ def energy(signal, levels=None, wavelet=DEFAULT_WAVELET):
 
 
 def first_level_energy(current, wavelet=DEFAULT_WAVELET):
-    """Calculates the energy of the first level wavelet decomposition.
+    """Calculates the energy of the first level wavelet transform.
 
     This is an ease-of-use interface to the energy() function.
 
@@ -74,8 +74,8 @@ def first_level_energy(current, wavelet=DEFAULT_WAVELET):
     return energy(current, levels=(1,), wavelet=wavelet)
 
 
-def all_decomposition_levels_energy(current, wavelet=DEFAULT_WAVELET):
-    """Calculates the energy of the all wavelet decomposition levels.
+def all_transform_levels_energy(current, wavelet=DEFAULT_WAVELET):
+    """Calculates the energy of the all wavelet transform levels.
 
     This is an ease-of-use interface to the energy() function.
 
@@ -90,7 +90,7 @@ def all_decomposition_levels_energy(current, wavelet=DEFAULT_WAVELET):
 
 
 def dominant_scale(signal, wavelet=DEFAULT_WAVELET):
-    """Returns the dominant scale (=level) of the wavelet decomposition.
+    """Returns the dominant scale (=level) of the wavelet transform.
 
     The dominant scale is defined as the level with the maximum energy.
 
@@ -108,7 +108,7 @@ def dominant_scale(signal, wavelet=DEFAULT_WAVELET):
 def energy_over_time(signal, n_partitions=5, wavelet=DEFAULT_WAVELET):
     """Calculates the energy over time.
 
-    The first level wavelet decomposition is applied to given signal and the
+    The first level wavelet transform is applied to given signal and the
     details coefficient \\(c_D\\) then seperated into n_partitions equally
     sized parts \\((c_D(i))_{i \\in \\{1, 2, ..., \\text{n_partitions}\\}}\\).
     Then the energy over time can be calculated as the energy of each
