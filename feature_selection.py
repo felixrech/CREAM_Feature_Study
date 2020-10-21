@@ -109,6 +109,11 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
                 df.loc[len(df)] = ('removal of', rem_feature,
                                    new_features, 0., None)
 
+        # No features to remove or add (when max=1, 1 feature selected)
+        if df.empty:
+            print("End of regression, returning")
+            return best
+
         # Calculate score for each entry of dataframe
         for i, _ in df.iterrows():
             print(f"{line_del}Considering {df.loc[i, 'change_type']}"

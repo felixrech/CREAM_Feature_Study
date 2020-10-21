@@ -136,6 +136,11 @@ def stepwise_regression(features, y, feature_eval, max_features=None,
                 df.loc[len(df)] = (&#39;removal of&#39;, rem_feature,
                                    new_features, 0., None)
 
+        # No features to remove or add (when max=1, 1 feature selected)
+        if df.empty:
+            print(&#34;End of regression, returning&#34;)
+            return best
+
         # Calculate score for each entry of dataframe
         for i, _ in df.iterrows():
             print(f&#34;{line_del}Considering {df.loc[i, &#39;change_type&#39;]}&#34;
@@ -537,6 +542,11 @@ combination for given classifier.</p>
                 new_features = list(set(best.features) - set([rem_feature]))
                 df.loc[len(df)] = (&#39;removal of&#39;, rem_feature,
                                    new_features, 0., None)
+
+        # No features to remove or add (when max=1, 1 feature selected)
+        if df.empty:
+            print(&#34;End of regression, returning&#34;)
+            return best
 
         # Calculate score for each entry of dataframe
         for i, _ in df.iterrows():

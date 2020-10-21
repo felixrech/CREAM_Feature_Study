@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import feature_selection
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import plot_confusion_matrix
 
 
@@ -199,16 +198,12 @@ def feature_evaluation(X, y, output=True, confusion=False):
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
-    # Prepare a kNN
-    knn = KNeighborsClassifier(n_jobs=-1)
-    param_grid = {'n_neighbors': np.arange(1, 20)}
-
     # Do cross-validation on kNN
-    score, estimator = feature_selection.evaluate_feature(X, y, 'f1_macro',
-                                                          knn, param_grid)
+    evaluation = feature_selection.get_evaluation('decision_tree')
+    score, estimator = evaluation(X, y)
 
     # Predict the data set
-    y_pred = estimator.predict(X)
+    # y_pred = estimator.predict(X)
 
     # Print accuracy, precision, recall, and f1-score
     if output:
